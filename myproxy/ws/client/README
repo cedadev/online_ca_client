@@ -1,0 +1,6 @@
+This package myproxy.client.ws, contains all the functionality for web service
+clients to the MyProxy web service.  This includes shell scripts (.sh suffix)
+for logon and get trustroots calls.  These are implemented with curl but 
+alternative implementations are also provided which use wget (-wget.sh suffix)
+
+The __init__.py file contains the python client myproxy.ws.client.MyProxyWSClient.

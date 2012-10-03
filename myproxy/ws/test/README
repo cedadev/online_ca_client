@@ -1,0 +1,26 @@
+MyProxyWebService Unit Tests
+============================
+A test MyProxy server is needed for most of these tests.  Test MyProxyWebService
+WSGI apps are created and queried by client calls in the tests.  The apps must
+be configured to communicate with a backend MyProxy server.
+
+This package contains three unit test modules:
+
+1) test_httpbasicauth: test HTTP Basic Auth middleware used by the MyProxy
+logon web service call.  The WSGI app is tested within Paste.fixture - i.e. no 
+separate server process is started.  A Paste Deploy ini file httpbasicauth.ini,
+configures the app.
+
+2) test_myproxywsgi.py: test full MyProxy Web Service - logon and getTrustRoots
+calls.  The WSGI app is tested within Paste.fixture.
+
+3) test_myproxywsgi_with_paster.py: test full MyProxy Web Service running it
+over SSL with paster.  The unit tests automatically start the app with paster 
+running in a separate thread, closing it down when the test is finished.  The
+tests call bash shell scripts myproxy-ws-logon.sh, myproxy-ws-get-trustroots.sh
+must have execute permissions:
+
+$ chmod 755 ./*.sh
+
+The same Paste Deploy ini file myproxywsgi.ini, is used to configure the app
+for 2) and 3).  Unit tests setting for 2) and 3) are in test_myproxywsgi.cfg
