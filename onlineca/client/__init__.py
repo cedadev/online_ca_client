@@ -21,9 +21,8 @@ from ndg.httpsclient.utils import (_should_use_proxy, fetch_stream_from_url,
 from ndg.httpsclient.ssl_context_util import make_ssl_context
 from ndg.httpsclient.urllib2_build_opener import build_opener
 
-testvar = True
 
-class MyProxyWSClient(object):
+class OnlineCaClient(object):
     PRIKEY_NBITS = 2048
     MESSAGE_DIGEST_TYPE = "md5"
     CERT_REQ_POST_PARAM_KEYNAME = 'certificate_request'
@@ -32,7 +31,6 @@ class MyProxyWSClient(object):
 
     def __init__(self):
         self.__ca_cert_dir = None
-        self.timeout = 500
 
     @property
     def ca_cert_dir(self):

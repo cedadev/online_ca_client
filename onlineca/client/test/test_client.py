@@ -18,15 +18,15 @@ from OpenSSL import crypto, SSL
 
 from ndg.httpsclient.ssl_context_util import make_ssl_context
 
-from myproxy.ws.client import MyProxyWSClient
+from myproxy.ws.client import OnlineCaClient
 from myproxy.ws.test import test_ca_dir
 
 
-class WSClientTestCase(unittest.TestCase):
-    """Test MyProxy Web Service Client"""
+class OnlineCaClientTestCase(unittest.TestCase):
+    """Test OnlineCA Service Client"""
     here_dir = os.path.dirname(os.path.abspath(__file__))
     config_filepath = os.path.join(here_dir, 
-                                   'test_myproxywebservice_client.cfg')
+                                   'test_onlineca_client.cfg')
     
     def __init__(self, *args, **kwargs):
         self.cfg = SafeConfigParser({'here': self.__class__.here_dir})
@@ -36,16 +36,16 @@ class WSClientTestCase(unittest.TestCase):
         unittest.TestCase.__init__(self, *args, **kwargs)  
           
     def test01_logon(self):
-        opt_name = 'WSClientTestCase.test01_logon'
+        opt_name = 'OnlineCaClientTestCase.test01_logon'
         username = self.cfg.get(opt_name, 'username')
         try: 
             password = self.cfg.get(opt_name, 'password')
         except NoOptionError:
-            password = getpass('WSClientTestCase.test01_logon password: ')
+            password = getpass('OnlineCaClientTestCase.test01_logon password: ')
 
         server_url = self.cfg.get(opt_name, 'uri')
         
-        myproxy_client = MyProxyWSClient()
+        myproxy_client = OnlineCaClient()
         myproxy_client.ca_cert_dir = test_ca_dir
         
         res = myproxy_client.logon(username, password, server_url)
@@ -60,7 +60,7 @@ class WSClientTestCase(unittest.TestCase):
           
     def test02_logon_with_ssl_client_authn(self):
         # Some cases may require client to pass cert in SSL handshake
-        opt_name = 'WSClientTestCase.test02_logon_with_ssl_client_authn'
+        opt_name = 'OnlineCaClientTestCase.test02_logon_with_ssl_client_authn'
         username = self.cfg.get(opt_name, 'username')
         try: 
             password = self.cfg.get(opt_name, 'password')
@@ -71,7 +71,7 @@ class WSClientTestCase(unittest.TestCase):
         client_cert_filepath = self.cfg.get(opt_name, 'client_cert_filepath')
         client_key_filepath = self.cfg.get(opt_name, 'client_key_filepath')
         
-        myproxy_client = MyProxyWSClient()
+        myproxy_client = OnlineCaClient()
 
         ssl_ctx = make_ssl_context(cert_file=client_cert_filepath,
                                    key_file=client_key_filepath,
