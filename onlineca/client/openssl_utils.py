@@ -8,6 +8,8 @@ __contact__ = "Philip.Kershaw@stfc.ac.uk"
 __revision__ = '$Id$'
 import re
 
+from OpenSSL import crypto
+
 
 class X509SubjectNameError(Exception):
     '''Base class for X509SubjectName class errors'''
@@ -124,3 +126,13 @@ class X509SubjectName(object):
         s_dn += separator.join(dn_list)
                                 
         return s_dn
+
+    def as_openssl_x509_subject_name(self):
+        '''@return: this object as an OpenSSL package equivalent type
+        @rtype: OpenSSL.crypto.X509Name
+        '''
+        subject_name = crypto.X509Name()
+        for k, v in self._dn.items():
+            setattr(subject_name, k, v)
+            
+        return subject_name

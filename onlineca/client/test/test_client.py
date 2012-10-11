@@ -18,18 +18,16 @@ from OpenSSL import crypto, SSL
 
 from ndg.httpsclient.ssl_context_util import make_ssl_context
 
-from myproxy.ws.client import OnlineCaClient
-from myproxy.ws.test import test_ca_dir
+from onlineca.client import OnlineCaClient
+from onlineca.client.test import TEST_CA_DIR, TEST_DIR
 
 
 class OnlineCaClientTestCase(unittest.TestCase):
     """Test OnlineCA Service Client"""
-    here_dir = os.path.dirname(os.path.abspath(__file__))
-    config_filepath = os.path.join(here_dir, 
-                                   'test_onlineca_client.cfg')
+    config_filepath = os.path.join(TEST_DIR, 'test_onlineca_client.cfg')
     
     def __init__(self, *args, **kwargs):
-        self.cfg = SafeConfigParser({'here': self.__class__.here_dir})
+        self.cfg = SafeConfigParser({'here': TEST_DIR})
         self.cfg.optionxform = str
         self.cfg.read(self.__class__.config_filepath)
         
@@ -46,7 +44,7 @@ class OnlineCaClientTestCase(unittest.TestCase):
         server_url = self.cfg.get(opt_name, 'uri')
         
         myproxy_client = OnlineCaClient()
-        myproxy_client.ca_cert_dir = test_ca_dir
+        myproxy_client.ca_cert_dir = TEST_CA_DIR
         
         res = myproxy_client.logon(username, password, server_url)
         self.assert_(res)
@@ -75,7 +73,7 @@ class OnlineCaClientTestCase(unittest.TestCase):
 
         ssl_ctx = make_ssl_context(cert_file=client_cert_filepath,
                                    key_file=client_key_filepath,
-                                   ca_dir=test_ca_dir, 
+                                   ca_dir=TEST_CA_DIR, 
                                    verify_peer=True, 
                                    url=server_url, 
                                    method=SSL.SSLv3_METHOD)
@@ -90,6 +88,7 @@ class OnlineCaClientTestCase(unittest.TestCase):
         self.assert_(subj)
         self.assert_(subj.CN)
         print("Returned certificate subject CN=%r" % subj)
+
 
 if __name__ == "__main__":
     unittest.main() 
