@@ -43,10 +43,10 @@ class OnlineCaClientTestCase(unittest.TestCase):
 
         server_url = self.cfg.get(opt_name, 'uri')
         
-        myproxy_client = OnlineCaClient()
-        myproxy_client.ca_cert_dir = TEST_CA_DIR
+        onlineca_client = OnlineCaClient()
+        onlineca_client.ca_cert_dir = TEST_CA_DIR
         
-        res = myproxy_client.logon(username, password, server_url)
+        res = onlineca_client.logon(username, password, server_url)
         self.assert_(res)
         
         pem_out = res.read()
@@ -54,8 +54,10 @@ class OnlineCaClientTestCase(unittest.TestCase):
         subj = cert.get_subject()
         self.assert_(subj)
         self.assert_(subj.CN)
-        print("Returned certificate subject CN=%r" % subj)
-          
+        
+        print("Returned certificate subject %r" % subj)
+        print("Returned certificate issuer %r" % cert.get_issuer())
+        
     def test02_logon_with_ssl_client_authn(self):
         # Some cases may require client to pass cert in SSL handshake
         opt_name = 'OnlineCaClientTestCase.test02_logon_with_ssl_client_authn'
@@ -69,7 +71,7 @@ class OnlineCaClientTestCase(unittest.TestCase):
         client_cert_filepath = self.cfg.get(opt_name, 'client_cert_filepath')
         client_key_filepath = self.cfg.get(opt_name, 'client_key_filepath')
         
-        myproxy_client = OnlineCaClient()
+        onlineca_client = OnlineCaClient()
 
         ssl_ctx = make_ssl_context(cert_file=client_cert_filepath,
                                    key_file=client_key_filepath,
@@ -78,8 +80,8 @@ class OnlineCaClientTestCase(unittest.TestCase):
                                    url=server_url, 
                                    method=SSL.SSLv3_METHOD)
         
-        res = myproxy_client.logon(username, password, server_url, 
-                                   ssl_ctx=ssl_ctx)
+        res = onlineca_client.logon(username, password, server_url, 
+                                    ssl_ctx=ssl_ctx)
         self.assert_(res)
         
         pem_out = res.read()
@@ -87,7 +89,9 @@ class OnlineCaClientTestCase(unittest.TestCase):
         subj = cert.get_subject()
         self.assert_(subj)
         self.assert_(subj.CN)
-        print("Returned certificate subject CN=%r" % subj)
+        
+        print("Returned certificate subject %r" % subj)
+        print("Returned certificate issuer %r" % cert.get_issuer())
 
 
 if __name__ == "__main__":
