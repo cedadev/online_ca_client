@@ -20,53 +20,23 @@ except ImportError:
 
 
 setup(
-    name =            	'MyProxyWebService',
-    version =         	'0.2.3',
-    description =     	'MyProxy Web Service',
+    name =            	'ContrailOnlineCAClient',
+    version =         	'0.1.0',
+    description =     	'Certificate Authority Web Service',
     long_description = 	'''\
-Provides a simple web service interface to MyProxyCA.  MyProxy is a Service for 
-managing and issuing PKI based credentials which is part of the Globus Toolkit.  
-MyProxyWebService provides a HTTP based wrapper interface to MyProxy enabling
-HTTP based clients to connect to a MyProxy server and retrieve credentials.
+Provides a simple web service interface to an online CA suitable for use as a
+SLCS (Short-Lived Credential Service).
 
-The interface is implemented as a WSGI application which fronts a normal 
-MyProxyCA server.  ``myproxy-logon`` and ``myproxy-get-trustroots`` are 
-expressed as web service calls.  The WSGI application forwards the requests on 
-to the MyProxy server over the usual MyProxy protocol.  The web service 
-interface is RESTful using GET and POST operations and the logon interface makes
-uses of HTTP Basic Auth to pass username and pass-phrase credentials.  The 
-service is hosted over HTTPS.
+The interface is implemented as a WSGI application which fronts a Certificate
+Authority.  Web service call can be made to request a certificate.  The web 
+service interface is RESTful using GET and POST operations.  The service 
+should be hosted over HTTPS.  On the server-side, client authentication is 
+configurable to the required means.  This client uses  HTTP Basic Auth to pass 
+username and pass-phrase credentials
 
-The unit tests include a test application served using paster.  Client scripts
-are also available which need no specialised installation or applications, only
-openssl and wget or curl which are typically available on Linux/UNIX based 
-systems.
-
-Changes for version 0.2.3
-=========================
-Added example to tests to show SSL client authentication.
-
-Changes for version 0.2.2
-=========================
-The package hierarchy has been re-organised:
- * ``myproxy.server.wsgi``: contains middleware to make calls to a MyProxy 
-   service using the ``MyProxyClient`` package.  It exposes this interface 
-   through the ``environ`` dict so that other middleware or an app can access 
-   and use it.
- * ``myproxy.ws``: contains functionality specific to the web service interface:
-    - ``myproxy.ws.client``: contains all the functionality for web service clients to the MyProxy web service. This includes:
-       + shell scripts (``.sh`` suffix) for logon and get trustroots calls.  
-         These are implemented with openssl and curl.  Alternative 
-         implementations are also provided which use wget (``-wget.sh`` suffix)
-         instead of curl.  These scripts have also been tested against an 
-         independent Short-Lived Credential Service developed for the Contrail 
-         EU FP7 project.
-       + ``myproxy.ws.client.MyProxyWSClient``: is a Python client interface to
-         the web service.  The third party package ``ndg_httpclient`` is needed
-         for this class but note that overall, it is set as an optional install.  
-    - ``myproxy.ws.server``: contains the server side functionality - a set of 
-      WSGI middleware and an application to implement logon and get-trustroot 
-      web service calls.
+Client scripts are available which need no specialised installation or 
+applications, only openssl and wget or curl which are typically available on 
+Linux/UNIX based systems.
 
 Prerequisites
 =============
@@ -74,36 +44,30 @@ This has been developed and tested for Python 2.6 and 2.7.
 
 Installation
 ============
-Installation can be performed using easy_install or pip.  Since this package is
-a wrapper to MyProxy, a MyProxy instance must be deployed that this service can
-call and use.
+Installation can be performed using easy_install or pip.
 
 Configuration
 =============
-Examples are contained in ``myproxy.ws.client.test`` and ``myproxy.server.test``.
+Examples are contained in ``onlineca.client.test``.
 ''',
     author =          	'Philip Kershaw',
     author_email =    	'Philip.Kershaw@stfc.ac.uk',
     maintainer =        'Philip Kershaw',
     maintainer_email =  'Philip.Kershaw@stfc.ac.uk',
-    url =             	'http://proj.badc.rl.ac.uk/ndg/wiki/Security/MyProxyWebService',
+#    url =             	'',
     platforms =         ['POSIX', 'Linux', 'Windows'],
-    install_requires =  ['PasteDeploy', 
-                         'PasteScript',
-                         'WebOb', 
-                         'MyProxyClient'],
-    extras_require =    {'Python_client': 'ndg_httpclient'},
+    install_requires =  ['ndg_httpclient'],
     license =           __license__,
-    test_suite =        'myproxy.ws.test',
+    test_suite =        'onlineca.client.test',
     packages =          find_packages(),
     package_data =      {
-        'myproxy.ws.test': [
+        'onlineca.client.test': [
             'README', '*.cfg', '*.ini', '*.crt', '*.key', '*.pem', 'ca/*.0'
         ],
-        'myproxy.ws.client': [
+        'onlineca.client.client': [
             'README', '*.sh'
         ],
-        'myproxy.ws.client.test': [
+        'onlineca.client.test': [
             'README', '*.cfg'
         ]
     },
