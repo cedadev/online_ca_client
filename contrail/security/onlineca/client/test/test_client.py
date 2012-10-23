@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Unit tests for MyProxy Web Service client 
+"""Unit tests for Online CA Web Service client 
 """
 __author__ = "P J Kershaw"
 __date__ = "28/05/12"
