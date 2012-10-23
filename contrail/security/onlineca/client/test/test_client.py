@@ -18,8 +18,8 @@ from OpenSSL import crypto, SSL
 
 from ndg.httpsclient.ssl_context_util import make_ssl_context
 
-from onlineca.client import OnlineCaClient
-from onlineca.client.test import TEST_CA_DIR, TEST_DIR
+from contrail.security.onlineca.client import OnlineCaClient
+from contrail.security.onlineca.client.test import TEST_CA_DIR, TEST_DIR
 
 
 class OnlineCaClientTestCase(unittest.TestCase):

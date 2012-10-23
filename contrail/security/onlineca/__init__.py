@@ -1,4 +1,6 @@
-"""MyProxy Web Service myproxy namespace package
+"""Online CA client namespace package
+
+Contrail Project
 
 This is a setuptools namespace_package.  DO NOT place any other
 code in this file!  There is no guarantee that it will be installed

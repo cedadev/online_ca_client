@@ -16,10 +16,11 @@ import urllib2
 from urlparse import urlparse, urlunparse
 
 from OpenSSL import SSL, crypto
-from ndg.httpsclient.utils import (_should_use_proxy, fetch_stream_from_url, 
-                                   Configuration)
+
 from ndg.httpsclient.ssl_context_util import make_ssl_context
 from ndg.httpsclient.urllib2_build_opener import build_opener
+from ndg.httpsclient.utils import (_should_use_proxy, fetch_stream_from_url, 
+                                   Configuration)
 
 
 class OnlineCaClient(object):
