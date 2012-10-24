@@ -58,16 +58,16 @@ Examples are contained in ``onlineca.client.test``.
     platforms =         ['POSIX', 'Linux', 'Windows'],
     install_requires =  ['ndg_httpclient'],
     license =           __license__,
-    test_suite =        'onlineca.client.test',
+    test_suite =        'contrail.security.onlineca.client.test',
     packages =          find_packages(),
     package_data =      {
-        'onlineca.client.test': [
+        'contrail.security.onlineca.client.test': [
             'README', '*.cfg', '*.ini', '*.crt', '*.key', '*.pem', 'ca/*.0'
         ],
-        'onlineca.client.client': [
+        'contrail.security.onlineca.client.client': [
             'README', '*.sh'
         ],
-        'onlineca.client.test': [
+        'contrail.security.onlineca.client.test': [
             'README', '*.cfg'
         ]
     },
