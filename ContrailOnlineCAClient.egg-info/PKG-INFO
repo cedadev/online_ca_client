@@ -1,0 +1,55 @@
+Metadata-Version: 1.0
+Name: ContrailOnlineCAClient
+Version: 0.1.0dev-r8212
+Summary: Certificate Authority Web Service
+Home-page: UNKNOWN
+Author: Philip Kershaw
+Author-email: Philip.Kershaw@stfc.ac.uk
+License: BSD - See LICENSE file in top-level directory
+Description: Provides a simple web service interface to an online CA suitable for use as a
+        SLCS (Short-Lived Credential Service).
+        
+        The interface is implemented as a WSGI application which fronts a Certificate
+        Authority.  Web service call can be made to request a certificate.  The web 
+        service interface is RESTful using GET and POST operations.  The service 
+        should be hosted over HTTPS.  On the server-side, client authentication is 
+        configurable to the required means.  This client uses  HTTP Basic Auth to pass 
+        username and pass-phrase credentials
+        
+        Client scripts are available which need no specialised installation or 
+        applications, only openssl and wget or curl which are typically available on 
+        Linux/UNIX based systems.
+        
+        Prerequisites
+        =============
+        This has been developed and tested for Python 2.6 and 2.7.
+        
+        Installation
+        ============
+        Installation can be performed using easy_install or pip.
+        
+        Configuration
+        =============
+        Examples are contained in ``onlineca.client.test``.
+        
+Platform: POSIX
+Platform: Linux
+Platform: Windows
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Natural Language :: English
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python
+Classifier: Topic :: Security
+Classifier: Topic :: Internet
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: System :: Distributed Computing
+Classifier: Topic :: System :: Systems Administration :: Authentication/Directory
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
