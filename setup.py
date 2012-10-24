@@ -56,7 +56,7 @@ Examples are contained in ``onlineca.client.test``.
     maintainer_email =  'Philip.Kershaw@stfc.ac.uk',
 #    url =             	'',
     platforms =         ['POSIX', 'Linux', 'Windows'],
-    install_requires =  ['ndg_httpclient'],
+    install_requires =  ['ndg_httpsclient'],
     license =           __license__,
     test_suite =        'contrail.security.onlineca.client.test',
     packages =          find_packages(),
