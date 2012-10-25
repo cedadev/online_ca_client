@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-"""Distribution Utilities setup program for MyProxy Server Utilities Package
+"""Distribution Utilities setup program for Online CA Client Package
 
-NERC DataGrid Project
+Contrail Project
 """
 __author__ = "P J Kershaw"
 __date__ = "21/05/10"
@@ -62,13 +62,13 @@ Examples are contained in ``onlineca.client.test``.
     packages =          find_packages(),
     package_data =      {
         'contrail.security.onlineca.client.test': [
-            'README', '*.cfg', '*.ini', '*.crt', '*.key', '*.pem', 'ca/*.0'
+            '*.cfg', '*.crt', '*.key', '*.pem', 'ca/*.0'
         ],
-        'contrail.security.onlineca.client.client': [
-            'README', '*.sh'
+        'contrail.security.onlineca.client.sh': [
+            '*.sh'
         ],
-        'contrail.security.onlineca.client.test': [
-            'README', '*.cfg'
+        'contrail.security.onlineca.client': [
+            'README'
         ]
     },
     classifiers = [
