@@ -1,5 +1,6 @@
-"""MyProxy Web Service - web services client package
+"""Online CA service client package
 
+Contrail Project
 """
 __author__ = "P J Kershaw"
 __date__ = "28/05/12"
@@ -63,9 +64,6 @@ class OnlineCaClient(object):
     def create_cert_req(key_pair, message_digest=MESSAGE_DIGEST_TYPE):
         """Create a certificate request.
         
-        @type CN: basestring
-        @param CN: Common Name for certificate - effectively the same as the
-        username for the MyProxy credential
         @type keyPair: string/None
         @param keyPair: public/private key pair
         @type messageDigest: basestring

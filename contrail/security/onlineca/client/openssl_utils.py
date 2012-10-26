@@ -1,4 +1,6 @@
-"""MyProxy Web Service security utilities module
+"""Online CA OpenSSL utilities module
+
+Contrail Project
 """
 __author__ = "P J Kershaw"
 __date__ = "24/09/12"
