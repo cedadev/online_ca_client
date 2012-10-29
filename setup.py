@@ -28,15 +28,17 @@ Provides the client interface for an online Certificate Authority web-service.
 This package works with the ``ContrailOnlineCAService`` the server-side 
 implementation also available from PyPI.
 
-The interface is implemented as a WSGI application which fronts a Certificate
-Authority.  Web service call can be made to request a certificate.  The web 
-service interface is RESTful using GET and POST operations.  The service 
-should be hosted over HTTPS.  On the server-side, client authentication is 
-configurable to the required means.  This client uses  HTTP Basic Auth to pass 
-username and pass-phrase credentials
+Web service calls can be made to request a certificate.  The web service 
+interface is RESTful using GET and POST operations.  To request a certificate,
+a Certificate Signing Request is sent as a field with a HTTP POST call.  The 
+service should be hosted over HTTPS.  The client authenticates using HTTP Basic 
+Auth or SSL client authentication.  In the first case, username and password
+are sent.  For the latter, at least a username should be set as this needed to
+configure the subject name of the certificate requested.  If authentication
+succeeds, an X.509 certificate is returned. 
 
-Client scripts are available which need no specialised installation or 
-applications, only openssl and wget or curl which are typically available on 
+As well as a Python client, an implementation is included as shell scripts.  
+These require only openssl and wget or curl which are typically available on 
 Linux/UNIX based systems.
 
 The code has been developed for the Contrail Project, http://contrail-project.eu/
