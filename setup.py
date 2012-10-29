@@ -24,8 +24,9 @@ setup(
     version =         	'0.1.0',
     description =     	'Certificate Authority Web Service',
     long_description = 	'''\
-Provides a simple web service interface to an online CA suitable for use as a
-SLCS (Short-Lived Credential Service).
+Provides the client interface for an online Certificate Authority web-service.
+This package works with the ``ContrailOnlineCAService`` the server-side 
+implementation also available from PyPI.
 
 The interface is implemented as a WSGI application which fronts a Certificate
 Authority.  Web service call can be made to request a certificate.  The web 
@@ -37,6 +38,8 @@ username and pass-phrase credentials
 Client scripts are available which need no specialised installation or 
 applications, only openssl and wget or curl which are typically available on 
 Linux/UNIX based systems.
+
+The code has been developed for the Contrail Project, http://contrail-project.eu/
 
 Prerequisites
 =============
