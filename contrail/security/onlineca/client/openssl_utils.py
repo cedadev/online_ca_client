@@ -133,8 +133,15 @@ class X509SubjectName(object):
         '''@return: this object as an OpenSSL package equivalent type
         @rtype: OpenSSL.crypto.X509Name
         '''
-        subject_name = crypto.X509Name()
+        subject_name = crypto.X509().get_subject()
         for k, v in self._dn.items():
-            setattr(subject_name, k, v)
+            if isinstance(v, tuple):
+                # Ugly hack to get around problem that PyOpenSSL X509Name
+                # interface doesn't allowing the setting of multiple values for
+                # the same DN component
+                _v = v[0] + '/' + '/'.join(["%s=%s" % (k, i) for i in v[1:]])
+                setattr(subject_name, k, _v)
+            else:
+                setattr(subject_name, k, v)
             
         return subject_name
