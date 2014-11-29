@@ -30,7 +30,8 @@ class OnlineCaClient(object):
     CERT_REQ_POST_PARAM_KEYNAME = 'certificate_request'
     TRUSTED_CERTS_FIELDNAME = 'TRUSTED_CERTS'
     TRUSTED_CERTS_FILEDATA_FIELDNAME_PREFIX = 'FILEDATA_'
-
+    SSL_METHOD = SSL.TLSv1_METHOD
+	
     def __init__(self):
         self.__ca_cert_dir = None
 
@@ -91,9 +92,10 @@ class OnlineCaClient(object):
               cert_life_time=86400, ssl_ctx=None):
         """Obtain a new certificate"""
         if ssl_ctx is None:
-            ssl_ctx = make_ssl_context(ca_dir=self.ca_cert_dir, verify_peer=True, 
+            ssl_ctx = make_ssl_context(ca_dir=self.ca_cert_dir, 
+									   verify_peer=True, 
                                        url=server_url, 
-                                       method=SSL.SSLv3_METHOD)
+                                       method=self.__class__.SSL_METHOD)
 
         # Create a password manager
         password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -118,19 +120,35 @@ class OnlineCaClient(object):
         config = Configuration(ssl_ctx, True)
         res = fetch_stream_from_url(server_url, config, data=req, 
                                     handlers=handlers)
-        
-        return res
+                                    
+        pem_out = res.read()
+        cert = crypto.load_certificate(crypto.FILETYPE_PEM, pem_out)
+       
+        return key_pair, cert
         
     def get_trustroots(self, server_url, write_to_ca_cert_dir=False, 
                        bootstrap=False):
         """Get trustroots"""
-        raise NotImplementedError('To be completed in a subsequent release')
+        if bootstrap:
+			ca_cert_dir = None
+        else:
+			ca_cert_dir = self.ca_cert_dir
+			
+        ssl_ctx = make_ssl_context(ca_cert_dir, 
+								   verify_peer=not bootstrap, 
+								   url=server_url, 
+								   method=self.__class__.SSL_METHOD)
+
+        config = Configuration(ssl_ctx, True)
+        res = fetch_stream_from_url(server_url, config)
+        
         prefix = self.__class__.TRUSTED_CERTS_FILEDATA_FIELDNAME_PREFIX
         field_name = self.__class__.TRUSTED_CERTS_FIELDNAME
-        file_data = {}
         
-        files_dict = dict([(k.split(prefix, 1)[1], base64.b64decode(v)) 
-                          for k, v in file_data.items() if k != field_name])
+        files_dict = {}
+        for line in res.readlines():
+			file_name, enc_file_content = line.strip().split('=', 1)
+			files_dict[file_name] = base64.b64decode(enc_file_content)
         
         if write_to_ca_cert_dir:
             # Create the CA directory path if doesn't already exist
