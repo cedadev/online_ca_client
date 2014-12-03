@@ -89,8 +89,10 @@ class OnlineCaClient(object):
         return cert_req
         
     def logon(self, username, password, server_url, proxies=None, no_proxy=None,
-              cert_life_time=86400, ssl_ctx=None):
-        """Obtain a new certificate"""
+              cert_life_time=86400, ssl_ctx=None, pem_out_filepath=None):
+        """Obtain a create a new key pair and invoke the SLCS service to obtain
+        a certificate
+        """
         if ssl_ctx is None:
             ssl_ctx = make_ssl_context(ca_dir=self.ca_cert_dir, 
 									   verify_peer=True, 
@@ -123,6 +125,16 @@ class OnlineCaClient(object):
                                     
         pem_out = res.read()
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, pem_out)
+        
+        # Optionally output the private key and certificate together PEM 
+        # encoded in a single file
+        if pem_out_filepath:
+			pem_pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_pair)
+			pem_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+			
+			with open(pem_out_filepath, 'w', 0400) as pem_out_file:
+				pem_out_file.write(pem_pkey)
+				pem_out_file.write(pem_cert)
        
         return key_pair, cert
         

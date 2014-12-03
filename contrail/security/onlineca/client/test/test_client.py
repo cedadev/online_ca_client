@@ -52,6 +52,8 @@ class OnlineCaClientTestCase(unittest.TestCase):
     def test02_logon(self):
         opt_name = 'OnlineCaClientTestCase.test02_logon'
         username = self.cfg.get(opt_name, 'username')
+        pem_out_filepath = self.cfg.get(opt_name, 'pem_out_filepath')
+        
         try: 
             password = self.cfg.get(opt_name, 'password')
         except NoOptionError:
@@ -62,13 +64,17 @@ class OnlineCaClientTestCase(unittest.TestCase):
         onlineca_client = OnlineCaClient()
         onlineca_client.ca_cert_dir = TEST_CA_DIR
         
-        key_pair, cert = onlineca_client.logon(username, password, server_url)
-        self.assert_(res)
+        key_pair, cert = onlineca_client.logon(username, password, server_url,
+											pem_out_filepath=pem_out_filepath)
+        self.assert_(key_pair)
+        self.assert_(cert)
         
         subj = cert.get_subject()
         self.assert_(subj)
         self.assert_(subj.CN)
         
+        log.info("Returned key pair\n%r", 
+						crypto.dump_privatekey(crypto.FILETYPE_PEM, key_pair))
         log.info("Returned certificate subject %r" % subj)
         log.info("Returned certificate issuer %r" % cert.get_issuer())
         
