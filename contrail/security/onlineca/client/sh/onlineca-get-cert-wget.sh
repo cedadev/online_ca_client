@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Client script for web service interface to MyProxy logon based on openssl and
+# Client script for web service interface to SLCS logon based on openssl and
 # curl
 #
 # @author P J Kershaw 25/05/2010
@@ -13,16 +13,16 @@
 cmdname=$(basename $0)
 cmdline_opt=`getopt hU:l:So:c: $*`
 
-usage="Usage: $cmdname [-U MyProxy Web Service URI][-l username] ...\n
+usage="Usage: $cmdname [-U SLCS Web Service URI][-l username] ...\n
 \n
    Options\n
        -h\t\t\tDisplays usage\n
-       -U <uri>\t\tMyProxy web service URI\n
+       -U <uri>\t\tSLCS web service URI\n
        -l <username>\t\tUsername for the delegated proxy (defaults to \$LOGNAME)\n
        -S\t\t\tpass password from stdin rather prompt from tty\n
        -o <filepath>\t\tOutput location of end entity certificate or delegated proxy (default to stdout)\n
        -c <directory path>\tDirectory containing the trusted CA (Certificate Authority) certificates.  These are used to\n
-       \t\t\tverify the identity of the MyProxy Web Service.  Defaults to\n 
+       \t\t\tverify the identity of the SLCS Web Service.  Defaults to\n 
        \t\t\t${HOME}/.globus/certificates or\n
        \t\t\t/etc/grid-security/certificates if running as root.\n
 "
@@ -49,7 +49,7 @@ while true ; do
 done
 
 if [ -z $uri ]; then
-    echo -e Give the URI for the MyProxy web service logon request;
+    echo -e Give the URI for the SLCS web service logon request;
     echo -e $usage >&2 ;
     exit 1;
 fi
@@ -64,7 +64,7 @@ if [ $stdin_pass ]; then
     read password;
 else
     stty -echo
-    read -p "Enter MyProxy pass phrase: " password; echo
+    read -p "Enter SLCS pass phrase: " password; echo
     stty echo
 fi
 
@@ -98,7 +98,7 @@ key=$(openssl req -new -newkey rsa:2048 -nodes -keyout /dev/stdout -subj /CN=dum
 # URL Encode certificate request - allow for '+' symbol in the base64 charset - 
 # needs to be hex equivalent
 
-# Post request to MyProxy web service passing username/password for HTTP Basic
+# Post request to SLCS web service passing username/password for HTTP Basic
 # auth based authentication.  
 encoded_certreq=$(cat $certreqfilepath|sed s/+/%2B/g)
 

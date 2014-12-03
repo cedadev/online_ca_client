@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Client script for web service interface to MyProxy get-trustroots based on 
+# Client script for web service interface to SLCS get-trustroots based on 
 # curl and base64 commands.  Get trust roots retrieves the CA certificate 
-# issuer(s) of the MyProxy server's SSL certificate
+# issuer(s) of the SLCS server's SSL certificate
 #
 # @author P J Kershaw 07/06/2010
 #
@@ -18,8 +18,8 @@ usage="Usage: $cmdname [-h][-U get trust roots URI][-b][-c CA directory]\n
 \n
    Options\n
        -h\t\t\tDisplays usage and quits.\n
-       -U <uri>\t\tMyProxy web service URI\n
-       -b\t\t\tbootstrap trust in the MyProxy Server\n
+       -U <uri>\t\tSLCS web service URI\n
+       -b\t\t\tbootstrap trust in the SLCS Server\n
        -c <directory path>\tDirectory to store the trusted CA (Certificate Authority) certificates.\n
        \t\t\tDefaults to ${HOME}/.globus/certificates or\n
        \t\t\t/etc/grid-security/certificates if running as root.\n
@@ -44,7 +44,7 @@ while true ; do
 done
 
 if [ -z $uri ]; then
-    echo -e Give the URI for the MyProxy web service get trust roots request;
+    echo -e Give the URI for the SLCS web service get trust roots request;
     echo -e $usage >&2 ;
     exit 1;
 fi
@@ -86,14 +86,14 @@ fi
 if [ -z $bootstrap ]; then 
     ca_arg="--ca-directory $cadir"
 else
-    echo Bootstrapping MyProxy server root of trust.
+    echo Bootstrapping SLCS server root of trust.
     ca_arg="--no-check-certificate"
 fi
 
 # Make a temporary file for error output
 error_output_filepath="/tmp/$UID-$RANDOM.csr"
 
-# Post request to MyProxy web service
+# Post request to SLCS web service
 response=$(wget $uri  --secure-protocol SSLv3 $ca_arg -t 1 -O - 2> $error_output_filepath)
 
 # Extract error output and clean up
@@ -104,7 +104,7 @@ rm -f $error_output_filepath
 wget_statcode_line="HTTP request sent, awaiting response..."
 responsecode=$(echo "$error_output"|grep "$wget_statcode_line"|awk '{print $6}')
 if [ "$responsecode" != "200" ]; then
-    echo "MyProxy server returned error code $responsecode:" >&2
+    echo "SLCS server returned error code $responsecode:" >&2
     echo "$responsemsg" >&2
     exit 1
 fi
