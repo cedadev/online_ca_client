@@ -59,7 +59,7 @@ Examples are contained in ``onlineca.client.test``.
     author_email =    	'Philip.Kershaw@stfc.ac.uk',
     maintainer =        'Philip Kershaw',
     maintainer_email =  'Philip.Kershaw@stfc.ac.uk',
-    url =             	'https://github.com/philipkershaw/online_ca_client',
+    url =             	'https://github.com/cedadev/online_ca_client',
     platforms =         ['POSIX', 'Linux', 'Windows'],
     install_requires =  ['ndg_httpsclient'],
     license =           __license__,
