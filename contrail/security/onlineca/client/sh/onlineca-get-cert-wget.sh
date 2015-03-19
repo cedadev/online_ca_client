@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Client script for web service interface to MyProxy logon based on openssl and
+# Client script for web service interface to SLCS based on openssl and
 # curl
 #
 # @author P J Kershaw 25/05/2010
@@ -13,16 +13,16 @@
 cmdname=$(basename $0)
 cmdline_opt=`getopt hU:l:So:c: $*`
 
-usage="Usage: $cmdname [-U MyProxy Web Service URI][-l username] ...\n
+usage="Usage: $cmdname [-U Short-Lived Credential Service URI][-l username] ...\n
 \n
    Options\n
        -h\t\t\tDisplays usage\n
-       -U <uri>\t\tMyProxy web service URI\n
+       -U <uri>\t\tShort-Lived Credential service URI\n
        -l <username>\t\tUsername for the delegated proxy (defaults to \$LOGNAME)\n
        -S\t\t\tpass password from stdin rather prompt from tty\n
        -o <filepath>\t\tOutput location of end entity certificate or delegated proxy (default to stdout)\n
        -c <directory path>\tDirectory containing the trusted CA (Certificate Authority) certificates.  These are used to\n
-       \t\t\tverify the identity of the MyProxy Web Service.  Defaults to\n 
+       \t\t\tverify the identity of the Short-Lived Credential Service.  Defaults to\n 
        \t\t\t${HOME}/.globus/certificates or\n
        \t\t\t/etc/grid-security/certificates if running as root.\n
 "
@@ -49,7 +49,7 @@ while true ; do
 done
 
 if [ -z $uri ]; then
-    echo -e Give the URI for the MyProxy web service logon request;
+    echo -e Give the URI for the Short-Lived Credential service logon request;
     echo -e $usage >&2 ;
     exit 1;
 fi
@@ -64,7 +64,7 @@ if [ $stdin_pass ]; then
     read password;
 else
     stty -echo
-    read -p "Enter MyProxy pass phrase: " password; echo
+    read -p "Enter Short-Lived Credential phrase: " password; echo
     stty echo
 fi
 
@@ -98,23 +98,26 @@ key=$(openssl req -new -newkey rsa:2048 -nodes -keyout /dev/stdout -subj /CN=dum
 # URL Encode certificate request - allow for '+' symbol in the base64 charset - 
 # needs to be hex equivalent
 
-# Post request to MyProxy web service passing username/password for HTTP Basic
+# Post request to Short-Lived Credential service passing username/password for HTTP Basic
 # auth based authentication.  
 encoded_certreq=$(cat $certreqfilepath|sed s/+/%2B/g)
 
 # Clean up certificate request temporary file
 rm -f $certreqfilepath
 
-response=$(wget --secure-protocol SSLv3 --ca-directory=$cadir \
+response=$(wget --secure-protocol TLSv1 --ca-directory=$cadir \
 --http-user=$username --http-password=$password \
 --post-data "certificate_request=$encoded_certreq" \
--t 1 --auth-no-challenge $uri -O - 2>&1)
+-t 1 $uri -O - 2>&1)
 
 # Pull out the response code from the output
 wget_statcode_line="HTTP request sent, awaiting response..."
 responsecode=$(echo "$response"|grep "$wget_statcode_line"|awk '{print $6}')
 if [ "$responsecode" != "200" ]; then
-    echo "$responsemsg" >&2
+    if [ -n $responsecode ]; then
+        echo "$responsemsg" >&2
+    fi
+    echo "$response" >&2
     exit 1
 fi
 
