@@ -21,10 +21,13 @@ from ndg.httpsclient.ssl_context_util import make_ssl_context
 from contrail.security.onlineca.client import OnlineCaClient
 from contrail.security.onlineca.client.test import TEST_CA_DIR, TEST_DIR
 
+log = logging.getLogger(__name__)
+
 
 class OnlineCaClientTestCase(unittest.TestCase):
     """Test OnlineCA Service Client"""
-    config_filepath = os.path.join(TEST_DIR, 'test_onlineca_client.cfg')
+    config_filepath = os.environ.get('TEST_ONLINECA_CLIENT_CFG_FILEPATH') or \
+		os.path.join(TEST_DIR, 'test_onlineca_client.cfg')
     
     def __init__(self, *args, **kwargs):
         self.cfg = SafeConfigParser({'here': TEST_DIR})
@@ -33,9 +36,24 @@ class OnlineCaClientTestCase(unittest.TestCase):
         
         unittest.TestCase.__init__(self, *args, **kwargs)  
           
-    def test01_logon(self):
-        opt_name = 'OnlineCaClientTestCase.test01_logon'
+    def test01_get_trustroots(self):
+		opt_name = 'OnlineCaClientTestCase.test01_get_trustroots'
+		server_url = self.cfg.get(opt_name, 'uri')
+		
+		onlineca_client = OnlineCaClient()
+		onlineca_client.ca_cert_dir = TEST_CA_DIR
+		
+		trustroots = onlineca_client.get_trustroots(server_url, bootstrap=True,
+													write_to_ca_cert_dir=True)
+		self.assert_(trustroots)
+		for i in trustroots.items():
+			log.info("%s:\n%s" % i)
+		
+    def test02_logon(self):
+        opt_name = 'OnlineCaClientTestCase.test02_logon'
         username = self.cfg.get(opt_name, 'username')
+        pem_out_filepath = self.cfg.get(opt_name, 'pem_out_filepath')
+        
         try: 
             password = self.cfg.get(opt_name, 'password')
         except NoOptionError:
@@ -46,21 +64,23 @@ class OnlineCaClientTestCase(unittest.TestCase):
         onlineca_client = OnlineCaClient()
         onlineca_client.ca_cert_dir = TEST_CA_DIR
         
-        res = onlineca_client.logon(username, password, server_url)
-        self.assert_(res)
+        key_pair, cert = onlineca_client.logon(username, password, server_url,
+											pem_out_filepath=pem_out_filepath)
+        self.assert_(key_pair)
+        self.assert_(cert)
         
-        pem_out = res.read()
-        cert = crypto.load_certificate(crypto.FILETYPE_PEM, pem_out)
         subj = cert.get_subject()
         self.assert_(subj)
         self.assert_(subj.CN)
         
-        print("Returned certificate subject %r" % subj)
-        print("Returned certificate issuer %r" % cert.get_issuer())
+        log.info("Returned key pair\n%r", 
+						crypto.dump_privatekey(crypto.FILETYPE_PEM, key_pair))
+        log.info("Returned certificate subject %r" % subj)
+        log.info("Returned certificate issuer %r" % cert.get_issuer())
         
-    def test02_logon_with_ssl_client_authn(self):
+    def test03_logon_with_ssl_client_authn(self):
         # Some cases may require client to pass cert in SSL handshake
-        opt_name = 'OnlineCaClientTestCase.test02_logon_with_ssl_client_authn'
+        opt_name = 'OnlineCaClientTestCase.test03_logon_with_ssl_client_authn'
         username = self.cfg.get(opt_name, 'username')
         try: 
             password = self.cfg.get(opt_name, 'password')
@@ -78,7 +98,7 @@ class OnlineCaClientTestCase(unittest.TestCase):
                                    ca_dir=TEST_CA_DIR, 
                                    verify_peer=True, 
                                    url=server_url, 
-                                   method=SSL.SSLv3_METHOD)
+                                   method=SSL.TLSv1_METHOD)
         
         res = onlineca_client.logon(username, password, server_url, 
                                     ssl_ctx=ssl_ctx)
@@ -90,8 +110,8 @@ class OnlineCaClientTestCase(unittest.TestCase):
         self.assert_(subj)
         self.assert_(subj.CN)
         
-        print("Returned certificate subject %r" % subj)
-        print("Returned certificate issuer %r" % cert.get_issuer())
+        log.info("Returned certificate subject %r" % subj)
+        log.info("Returned certificate issuer %r" % cert.get_issuer())
 
 
 if __name__ == "__main__":
