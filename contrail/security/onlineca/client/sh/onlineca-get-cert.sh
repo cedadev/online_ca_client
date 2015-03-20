@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Client script for Online CA web service interface based on openssl and
+# Client script for Short-Lived Credential Service interface based on openssl and
 # curl
 #
 # @author P J Kershaw 25/05/2010
@@ -17,7 +17,7 @@ usage="Usage: $cmdname [-U Online CA Service URI][-l username] ...\n
 \n
    Options\n
        -h\t\t\tDisplays usage\n
-       -U <uri>\t\tOnline CA web service URI\n
+       -U <uri>\t\tShort-Lived Credential Service URI\n
        -l <username>\t\tUsername for the delegated credential (defaults to \$LOGNAME)\n
        -S\t\t\tpass password from stdin rather prompt from tty\n
        -n\t\t\tsend null password (for advanced use with SSL client authentication)\n
@@ -59,7 +59,7 @@ while true ; do
 done
 
 if [ -z $uri ]; then
-    echo -e Give the URI for the Online CA web service get certificate request;
+    echo -e Give the URI for the Short-Lived Credential Service get certificate request;
     echo -e $usage >&2 ;
     exit 1;
 fi
@@ -113,7 +113,7 @@ certreqfilepath="/tmp/$UID-$RANDOM.csr"
 # Generate key pair and request.  The key file is written to the 'key' var
 key=$(openssl req -new -newkey rsa:2048 -nodes -keyout /dev/stdout -subj /CN=dummy -out $certreqfilepath 2> /dev/null)
 
-# Post request to Online CA web service passing username/password for HTTP Basic
+# Post request to Short-Lived Credential Service passing username/password for HTTP Basic
 # auth based authentication.  
 # 
 # Nb. Earlier versions of curl don't support --data-urlencode so use this 
@@ -122,7 +122,7 @@ key=$(openssl req -new -newkey rsa:2048 -nodes -keyout /dev/stdout -subj /CN=dum
 # Alterations to change Base 64 encoding to URL safe Base 64
 encoded_certreq=$(cat $certreqfilepath|sed s/+/%2B/g)
 
-response=$(curl $uri --sslv3 -u $username:$password --data "certificate_request=$encoded_certreq" --capath $cadir -w " %{http_code}" -s -S $clientcert_opt $clientkey_opt)
+response=$(curl $uri --tlsv1 -u $username:$password --data "certificate_request=$encoded_certreq" --capath $cadir -w " %{http_code}" -s -S $clientcert_opt $clientkey_opt)
 
 responsemsg=$(echo "$response"|sed '$s/ *\([^ ]* *\)$//')
 responsecode=$(echo $response|awk '{print $NF}')

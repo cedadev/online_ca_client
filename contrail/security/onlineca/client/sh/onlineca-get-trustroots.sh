@@ -2,7 +2,7 @@
 #
 # Client script for web service interface to SLCS get-trustroots based on 
 # curl and base64 commands.  Get trust roots retrieves the CA certificate 
-# issuer(s) of the SLCS server's SSL certificate
+# issuer(s) of the Short-Lived Credential Service's SSL certificate
 #
 # @author P J Kershaw 07/06/2010
 #
@@ -18,8 +18,8 @@ usage="Usage: $cmdname [-h][-U get trust roots URI][-b][-c CA directory]\n
 \n
    Options\n
        -h\t\t\tDisplays usage and quits.\n
-       -U <uri>\t\tSLCS web service URI\n
-       -b\t\t\tbootstrap trust in the SLCS Server\n
+       -U <uri>\t\tShort-Lived Credential Service URI\n
+       -b\t\t\tbootstrap trust in the Short-Lived Credential Service\n
        -c <directory path>\tDirectory to store the trusted CA (Certificate Authority) certificates.\n
        \t\t\tDefaults to ${HOME}/.globus/certificates or\n
        \t\t\t/etc/grid-security/certificates if running as root.\n
@@ -44,7 +44,7 @@ while true ; do
 done
 
 if [ -z $uri ]; then
-    echo -e Give the URI for the SLCS web service get trust roots request;
+    echo -e Give the URI for the Short-Lived Credential Service get trust roots request;
     echo -e $usage >&2 ;
     exit 1;
 fi
@@ -71,12 +71,12 @@ fi
 if [ -z $bootstrap ]; then 
     ca_arg="--capath $cadir"
 else
-    echo Bootstrapping SLCS server root of trust.
+    echo Bootstrapping Short-Lived Credential Service root of trust.
     ca_arg="--insecure"
 fi
 
-# Post request to SLCS web service
-response=$(curl $uri --sslv3 $ca_arg -w " %{http_code}" -s -S)
+# Post request to Short-Lived Credential Service
+response=$(curl $uri --tlsv1 $ca_arg -w " %{http_code}" -s -S)
 responsemsg=$(echo "$response"|sed '$s/ *\([^ ]* *\)$//')
 responsecode=$(echo $response|awk '{print $NF}')
 if [ "$responsecode" != "200" ]; then
