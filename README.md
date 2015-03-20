@@ -33,13 +33,13 @@ Examples are contained in ``onlineca.client.test``.
 
 Shell script client - bootstrapping trust saving CA trust root certificates in ``./ca`` directory: 
 ```
-$ ./onlineca-get-trustroots.sh -U https://slcs.ceda.ac.uk/onlineca/trustroots/ -c ./ca -b
+$ ./onlineca-get-trustroots.sh -U https://<hostname>/onlineca/trustroots/ -c ./ca -b
 Bootstrapping Short-Lived Credential Service root of trust.
 Trust roots have been installed in ./ca.
 ```
 Obtaining a certificate:
 ```
-$ ./onlineca-get-cert.sh -U https://slcs.ceda.ac.uk/onlineca/certificate/ -l <username> -c ./ca
+$ ./onlineca-get-cert.sh -U https://<hostname>/onlineca/certificate/ -l <username> -c ./ca
 Enter Short-Lived Credential phrase: 
 -----BEGIN CERTIFICATE-----
 ...
