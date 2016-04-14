@@ -12,7 +12,16 @@ logging.basicConfig(level=logging.DEBUG)
 import unittest
 import os
 from getpass import getpass
-from ConfigParser import SafeConfigParser, NoOptionError
+
+import six
+
+# six doesn't seem to handle SafeConfigParser deprecation correctly:
+if six.PY2:   
+    from six.moves.configparser import SafeConfigParser as SafeConfigParser_
+else:
+    from six.moves.configparser import ConfigParser as SafeConfigParser_
+
+from six.moves.configparser import NoOptionError
 
 from OpenSSL import crypto, SSL
 
@@ -30,25 +39,25 @@ class OnlineCaClientTestCase(unittest.TestCase):
 		os.path.join(TEST_DIR, 'test_onlineca_client.cfg')
     
     def __init__(self, *args, **kwargs):
-        self.cfg = SafeConfigParser({'here': TEST_DIR})
+        self.cfg = SafeConfigParser_({'here': TEST_DIR})
         self.cfg.optionxform = str
         self.cfg.read(self.__class__.config_filepath)
         
         unittest.TestCase.__init__(self, *args, **kwargs)  
           
     def test01_get_trustroots(self):
-		opt_name = 'OnlineCaClientTestCase.test01_get_trustroots'
-		server_url = self.cfg.get(opt_name, 'uri')
-		
-		onlineca_client = OnlineCaClient()
-		onlineca_client.ca_cert_dir = TEST_CA_DIR
-		
-		trustroots = onlineca_client.get_trustroots(server_url, bootstrap=True,
-													write_to_ca_cert_dir=True)
-		self.assert_(trustroots)
-		for i in trustroots.items():
-			log.info("%s:\n%s" % i)
-		
+        opt_name = 'OnlineCaClientTestCase.test01_get_trustroots'
+        server_url = self.cfg.get(opt_name, 'uri')
+        
+        onlineca_client = OnlineCaClient()
+        onlineca_client.ca_cert_dir = TEST_CA_DIR
+        
+        trustroots = onlineca_client.get_trustroots(server_url, bootstrap=True,
+        											write_to_ca_cert_dir=True)
+        self.assert_(trustroots)
+        for i in trustroots.items():
+            log.info("%s:\n%s" % i)
+
     def test02_logon(self):
         opt_name = 'OnlineCaClientTestCase.test02_logon'
         username = self.cfg.get(opt_name, 'username')
@@ -57,7 +66,7 @@ class OnlineCaClientTestCase(unittest.TestCase):
         try: 
             password = self.cfg.get(opt_name, 'password')
         except NoOptionError:
-            password = getpass('OnlineCaClientTestCase.test01_logon password: ')
+            password = getpass('OnlineCaClientTestCase.test02_logon password: ')
 
         server_url = self.cfg.get(opt_name, 'uri')
         
@@ -75,8 +84,8 @@ class OnlineCaClientTestCase(unittest.TestCase):
         
         log.info("Returned key pair\n%r", 
 						crypto.dump_privatekey(crypto.FILETYPE_PEM, key_pair))
-        log.info("Returned certificate subject %r" % subj)
-        log.info("Returned certificate issuer %r" % cert.get_issuer())
+        log.info("Returned certificate subject %r", subj)
+        log.info("Returned certificate issuer %r", cert.get_issuer())
         
     def test03_logon_with_ssl_client_authn(self):
         # Some cases may require client to pass cert in SSL handshake
@@ -110,8 +119,8 @@ class OnlineCaClientTestCase(unittest.TestCase):
         self.assert_(subj)
         self.assert_(subj.CN)
         
-        log.info("Returned certificate subject %r" % subj)
-        log.info("Returned certificate issuer %r" % cert.get_issuer())
+        log.info("Returned certificate subject %r", subj)
+        log.info("Returned certificate issuer %r", cert.get_issuer())
 
 
 if __name__ == "__main__":

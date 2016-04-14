@@ -21,8 +21,8 @@ except ImportError:
 
 setup(
     name =            	'ContrailOnlineCAClient',
-    version =         	'0.2.1',
-    description =     	'Certificate Authority Web Service',
+    version =         	'0.3.0',
+    description =     	'Certificate Authority web service client',
     long_description = 	'''\
 Provides the client interface for an online Certificate Authority web-service.
 This package works with the ``ContrailOnlineCAService`` the server-side 
@@ -45,11 +45,11 @@ The code has been developed for the Contrail Project, http://contrail-project.eu
 
 Prerequisites
 =============
-This has been developed and tested for Python 2.6 and 2.7.
+This has been developed and tested for Python 2.7 and Python 3.5.
 
 Installation
 ============
-Installation can be performed using easy_install or pip.
+Installation can be performed using pip.
 
 Configuration
 =============
@@ -77,7 +77,7 @@ Examples are contained in ``onlineca.client.test``.
         ]
     },
     classifiers = [
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Environment :: Web Environment',
         'Intended Audience :: End Users/Desktop',
@@ -89,6 +89,7 @@ Examples are contained in ``onlineca.client.test``.
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
         'Topic :: Security',
         'Topic :: Internet',
         'Topic :: Scientific/Engineering',
