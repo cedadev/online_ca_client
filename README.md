@@ -21,11 +21,11 @@ The code has been developed for the Contrail Project, http://contrail-project.eu
 
 Prerequisites
 -------------
-This has been developed and tested for Python 2.6 and 2.7.
+This has been developed and tested for Python 2.7 and 3.5.
 
 Installation
 ------------
-Installation can be performed using easy_install or pip.
+Installation can be performed using pip.
 
 Configuration
 -------------

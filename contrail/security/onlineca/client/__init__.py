@@ -13,8 +13,17 @@ log = logging.getLogger(__name__)
 import base64
 import os
 import errno
-import urllib2
-from urlparse import urlparse, urlunparse
+
+import six
+
+if six.PY2:
+    _unicode_conv = lambda string_: string_
+else:
+    _unicode_conv = lambda string_: (isinstance(string_, bytes) and 
+                                     string_.decode() or string_)
+    
+from six.moves import urllib 
+from six.moves.urllib.parse import urlparse, urlunparse
 
 from OpenSSL import SSL, crypto
 
@@ -25,13 +34,15 @@ from ndg.httpsclient.utils import (_should_use_proxy, fetch_stream_from_url,
 
 
 class OnlineCaClient(object):
+    '''Client to Online Certificate Authority Service'''
+    
     PRIKEY_NBITS = 2048
     MESSAGE_DIGEST_TYPE = "md5"
-    CERT_REQ_POST_PARAM_KEYNAME = 'certificate_request'
-    TRUSTED_CERTS_FIELDNAME = 'TRUSTED_CERTS'
-    TRUSTED_CERTS_FILEDATA_FIELDNAME_PREFIX = 'FILEDATA_'
+    CERT_REQ_POST_PARAM_KEYNAME = b'certificate_request'
+    TRUSTED_CERTS_FIELDNAME = b'TRUSTED_CERTS'
+    TRUSTED_CERTS_FILEDATA_FIELDNAME_PREFIX = b'FILEDATA_'
     SSL_METHOD = SSL.TLSv1_METHOD
-	
+
     def __init__(self):
         self.__ca_cert_dir = None
 
@@ -41,7 +52,7 @@ class OnlineCaClient(object):
     
     @ca_cert_dir.setter
     def ca_cert_dir(self, val):
-        if not isinstance(val, basestring):
+        if not isinstance(val, six.string_types):
             raise TypeError('Expecting string type for "ca_cert_dir"; got %r' %
                             type(val))
         
@@ -100,7 +111,7 @@ class OnlineCaClient(object):
                                        method=self.__class__.SSL_METHOD)
 
         # Create a password manager
-        password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
         
         # Get base URL for setting basic auth scope
         parsed_url = urlparse(server_url)
@@ -110,15 +121,15 @@ class OnlineCaClient(object):
         # If we knew the realm, we could use it instead of ``None``.
         password_mgr.add_password(None, base_url, username, password)
         
-        handlers = [urllib2.HTTPBasicAuthHandler(password_mgr)]
+        handlers = [urllib.request.HTTPBasicAuthHandler(password_mgr)]
             
         key_pair = self.__class__.create_key_pair()
         cert_req = self.__class__.create_cert_req(key_pair)
         
         # Convert plus chars to make it safe for HTTP POST
-        encoded_cert_req = cert_req.replace('+', '%2B')
-        req = "%s=%s\n" % (self.__class__.CERT_REQ_POST_PARAM_KEYNAME, 
-                           encoded_cert_req)
+        encoded_cert_req = cert_req.replace(b'+', b'%2B')
+        req = b"%s=%s\n" % (self.__class__.CERT_REQ_POST_PARAM_KEYNAME, 
+                            encoded_cert_req)
         config = Configuration(ssl_ctx, True)
         res = fetch_stream_from_url(server_url, config, data=req, 
                                     handlers=handlers)
@@ -129,12 +140,12 @@ class OnlineCaClient(object):
         # Optionally output the private key and certificate together PEM 
         # encoded in a single file
         if pem_out_filepath:
-			pem_pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_pair)
-			pem_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-			
-			with open(pem_out_filepath, 'w', 0400) as pem_out_file:
-				pem_out_file.write(pem_pkey)
-				pem_out_file.write(pem_cert)
+            pem_pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_pair)
+            pem_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+
+            with open(pem_out_filepath, 'wb', 0o400) as pem_out_file:
+                pem_out_file.write(pem_pkey)
+                pem_out_file.write(pem_cert)
        
         return key_pair, cert
         
@@ -142,10 +153,10 @@ class OnlineCaClient(object):
                        bootstrap=False):
         """Get trustroots"""
         if bootstrap:
-			ca_cert_dir = None
+            ca_cert_dir = None
         else:
-			ca_cert_dir = self.ca_cert_dir
-			
+            ca_cert_dir = self.ca_cert_dir
+
         ssl_ctx = make_ssl_context(ca_cert_dir, 
 								   verify_peer=not bootstrap, 
 								   url=server_url, 
@@ -154,25 +165,23 @@ class OnlineCaClient(object):
         config = Configuration(ssl_ctx, True)
         res = fetch_stream_from_url(server_url, config)
         
-        prefix = self.__class__.TRUSTED_CERTS_FILEDATA_FIELDNAME_PREFIX
-        field_name = self.__class__.TRUSTED_CERTS_FIELDNAME
-        
         files_dict = {}
         for line in res.readlines():
-			file_name, enc_file_content = line.strip().split('=', 1)
-			files_dict[file_name] = base64.b64decode(enc_file_content)
+            file_name, enc_file_content = line.strip().split(b'=', 1)
+            files_dict[file_name] = base64.b64decode(enc_file_content)
         
         if write_to_ca_cert_dir:
             # Create the CA directory path if doesn't already exist
             try:
                 os.makedirs(self.ca_cert_dir)
-            except OSError, e:
+            except OSError as e:
                 # Ignore if the path already exists
                 if e.errno != errno.EEXIST:
                     raise
                 
             for file_name, file_contents in files_dict.items():
-                file_path = os.path.join(self.ca_cert_dir, file_name)
+                file_path = os.path.join(self.ca_cert_dir, 
+                                         _unicode_conv(file_name))
                 open(file_path, 'wb').write(file_contents)
                 
         return files_dict
