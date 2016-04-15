@@ -6,7 +6,7 @@ Contrail Project
 __author__ = "P J Kershaw"
 __date__ = "21/05/10"
 __copyright__ = "(C) 2014 Science and Technology Facilities Council"
-__license__ = """BSD - See LICENSE file in top-level directory"""
+__license__ = """BSD - See LICENSE file in contrail.security.onlineca.client"""
 __contact__ = "Philip.Kershaw@stfc.ac.uk"
 __revision__ = '$Id: $'
 
@@ -74,6 +74,9 @@ Examples are contained in ``onlineca.client.test``.
         ],
         'contrail.security.onlineca.client': [
             'README'
+        ],
+        'contrail.security.onlineca.client': [
+            'LICENSE'
         ]
     },
     classifiers = [
