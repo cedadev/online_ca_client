@@ -26,11 +26,12 @@ log = logging.getLogger(__name__)
 
 class OnlineCaClientCLI(object):
     """Online CA Client command line client interface"""
-    GET_TRUSTROOTS = "gen_ca"
+    GET_TRUSTROOTS_CMD = "get_trustroots"
     GET_CERT_CMD = "get_cert"
 
     DEF_CACERT_DIR = os.path.join(os.path.expanduser("~"), ".onlineca",
                                   "certificates")
+    PEM_OUT_TO_STDOUT = '-'
 
     def __init__(self):
         self.clnt = OnlineCaClient()
@@ -91,7 +92,7 @@ class OnlineCaClientCLI(object):
                                          'Online CA service')
 
         get_trustroots_arg_parser = sub_parsers.add_parser(
-                                    self.__class__.GET_TRUSTROOTS,
+                                    self.__class__.GET_TRUSTROOTS_CMD,
                                     help=get_trustroots_descr_and_help,
                                     description=get_trustroots_descr_and_help)
 
@@ -148,19 +149,19 @@ class OnlineCaClientCLI(object):
                                "private key and newly issued certificate.  "
                                "Defaults to stdout")
 
-        get_trustroots_arg_parser.add_argument("-c", "--ca-cert-dir",
+        get_cert_arg_parser.add_argument("-c", "--ca-cert-dir",
                           dest="cacert_dir",
                           metavar="CACERT_DIR",
                           default=self.__class__.DEF_CACERT_DIR,
                           help="Directory containing CA certificate trustroots "
                                "for trusting")
 
-        get_trustroots_arg_parser.add_argument("-b", "--bootstrap",
-                                               action="store_true",
-                                               dest="bootstrap",
-                                               default=False,
-                                               help="Bootstrap trust in Online "
-                                                    "CA server")
+        get_cert_arg_parser.add_argument("-b", "--bootstrap",
+                                       action="store_true",
+                                       dest="bootstrap",
+                                       default=False,
+                                       help="Bootstrap trust in Online "
+                                            "CA server")
 
         # Parses from arguments input to this method if set, otherwise parses
         # from sys.argv
