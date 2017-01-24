@@ -2,9 +2,6 @@
 
 Contrail Project
 """
-from pip._vendor.requests.sessions import session
-from requests.sessions import Session
-import requests_oauthlib
 __author__ = "P J Kershaw"
 __date__ = "28/05/12"
 __copyright__ = "(C) 2012 Science and Technology Facilities Council"
@@ -18,6 +15,9 @@ import os
 import errno
 
 import six
+from pip._vendor.requests.sessions import session
+from requests.sessions import Session
+import requests_oauthlib
 
 if six.PY2:
     _unicode_conv = lambda string_: string_
