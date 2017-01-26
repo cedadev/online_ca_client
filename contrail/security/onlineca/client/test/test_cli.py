@@ -9,9 +9,12 @@ __license__ = "BSD - see LICENSE file in top-level directory"
 __contact__ = "Philip.Kershaw@stfc.ac.uk"
 __revision__ = '$Id$'
 import os
+import sys
+import shutil
 import unittest
 
 import six
+from OpenSSL import crypto
 
 from contrail.security.onlineca.client.test import TEST_DIR
 from contrail.security.onlineca.client.cli import OnlineCaClientCLI
@@ -29,17 +32,18 @@ class OnlineCaClientCLITestCase(unittest.TestCase):
     'Test Certificate Authority command line interface'
     ONLINECA_GET_CERT_URL = os.environ.get(
                                 "TEST_ONLINECA_GET_CERT_URL",
-                                "https://localhost:5000/oauth/certificate/")
+                                "https://localhost:5000/onlineca/certificate/")
 
     ONLINECA_GET_TRUSTROOTS_URL = os.environ.get(
-                                   "TEST_ONLINECA_GET_TRUSTROOTS_URL",
-                                   "https://localhost:5000/oauth/trustroots")
+                               "TEST_ONLINECA_GET_TRUSTROOTS_URL",
+                               "https://localhost:5000/onlineca/trustroots/")
 
     CACERT_DIR = os.path.join(TEST_DIR, "test-cli-ca")
-    USERNAME = ""
+    USERNAME = os.environ.get("TEST_ONLINECA_GET_CERT_USERNAME", "another")
+    PASSWORD = os.environ.get("TEST_ONLINECA_GET_CERT_PASSWORD", "changeme")
     PEM_OUT_FILEPATH = os.path.join(TEST_DIR, "cli-test-usercert.pem")
 
-    def test01_get_trustroots_with_bootstrap(self):
+    def setUp(self):
         try:
             OnlineCaClientCLI().main(
                 OnlineCaClientCLI.GET_TRUSTROOTS_CMD,
@@ -48,24 +52,46 @@ class OnlineCaClientCLITestCase(unittest.TestCase):
                 '--ca-cert-dir', self.__class__.CACERT_DIR
             )
 
-        finally:
-            try:
-                os.unlink(self.__class__.CACERT_DIR)
-            except file_not_found_excep:
-                pass
+        except Exception:
+            shutil.rmtree(self.__class__.CACERT_DIR, True)
+            raise
 
-    def test02_get_cert_with_bootstrap(self):
+    def tearDown(self):
+        shutil.rmtree(self.__class__.CACERT_DIR, True)
+        unittest.TestCase.tearDown(self)
+
+    def _check_cert(self, cert_filepath):
+        with open(cert_filepath, 'rb') as cert_file:
+            s_cert = cert_file.read()
+
+        cert = crypto.load_certificate(crypto.FILETYPE_PEM, s_cert)
+        self.assertIsNotNone(cert.get_issuer())
+
+        return cert
+
+    def test02_get_cert(self):
+
         try:
+            # Fake stdin for password fed in via stdin
+            stdin_stream = sys.stdin
+            fake_stdin = six.StringIO()
+
+            fake_stdin.write(self.__class__.PASSWORD)
+            fake_stdin.seek(0)
+            sys.stdin = fake_stdin
+
             OnlineCaClientCLI().main(
                 OnlineCaClientCLI.GET_CERT_CMD,
                 '-s', self.__class__.ONLINECA_GET_CERT_URL,
                 '-l', self.__class__.USERNAME,
+                '--stdin-password',
                 '-o', self.__class__.PEM_OUT_FILEPATH,
-                '-b'
+                '-c', self.__class__.CACERT_DIR
             )
 
             self._check_cert(self.__class__.PEM_OUT_FILEPATH)
         finally:
+            sys.stdin = stdin_stream
             try:
                 os.unlink(self.__class__.PEM_OUT_FILEPATH)
             except file_not_found_excep:

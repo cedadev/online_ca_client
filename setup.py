@@ -100,5 +100,10 @@ Examples are contained in ``onlineca.client.test``.
         'Topic :: System :: Systems Administration :: Authentication/Directory',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
+    entry_points={
+        'console_scripts': [
+            'online-ca-client = contrail.security.onlineca.client.cli:main',
+             ],
+        },
     zip_safe = False
 )

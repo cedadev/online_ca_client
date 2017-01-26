@@ -139,7 +139,7 @@ class OnlineCaClient(object):
 
         res = session.post(server_url, data=req, verify=self.ca_cert_dir)
         if not res.ok:
-            raise OnlineCaClientErrorResponse('Error retrieving CA trust roots'
+            raise OnlineCaClientErrorResponse('Error getting certificate'
                                               ': status: {} {}'.format(
                                                                 res.status_code,
                                                                 res.reason),

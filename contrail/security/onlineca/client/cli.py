@@ -17,7 +17,10 @@ import os
 import sys
 import logging
 import getpass
+import warnings
 from argparse import ArgumentParser
+
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 from contrail.security.onlineca.client import OnlineCaClient
 
@@ -44,7 +47,7 @@ class OnlineCaClientCLI(object):
         ArgumentParser
         '''
         if cmdline_args.stdin_password:
-            password = password = sys.stdin.readline().rstrip()
+            password = sys.stdin.readline().rstrip()
         else:
             password = getpass.getpass('Enter password for user {} on Online '
                                        'CA server {}:'.format(
@@ -65,8 +68,8 @@ class OnlineCaClientCLI(object):
         '''
         self.clnt.ca_cert_dir = cmdline_args.ca_cert_dir
         self.clnt.get_trustroots(cmdline_args.server_url,
-                         write_to_ca_cert_dir=cmdline_args.write_to_ca_cert_dir,
-                         bootstrap=cmdline_args.bootstrap)
+                                 write_to_ca_cert_dir=True,
+                                 bootstrap=cmdline_args.bootstrap)
 
     def main(self, *args):
         '''Main method for parsing arguments from the command line or input
@@ -96,8 +99,14 @@ class OnlineCaClientCLI(object):
                                     help=get_trustroots_descr_and_help,
                                     description=get_trustroots_descr_and_help)
 
+        get_trustroots_arg_parser.add_argument("-s", "--server-url",
+                                            dest="server_url",
+                                            metavar="<get trust roots URL>",
+                                            help="Server URL for Get trust "
+                                                 "roots request")
+
         get_trustroots_arg_parser.add_argument("-c", "--ca-cert-dir",
-                          dest="cacert_dir",
+                          dest="ca_cert_dir",
                           metavar="CACERT_DIR",
                           default=self.__class__.DEF_CACERT_DIR,
                           help="Directory to write CA certificate trustroots "
@@ -122,13 +131,13 @@ class OnlineCaClientCLI(object):
 
         get_cert_arg_parser.add_argument("-s", "--server-url",
                                          dest="server_url",
-                                         metavar="GET_CERT_SERVER_URL",
+                                         metavar="<get certificate URL>",
                                          help="Server URL for Get Certificate "
                                             "request")
 
         get_cert_arg_parser.add_argument("-l", "--username",
                                          dest="username",
-                                         metavar="USERNAME",
+                                         metavar="<username>",
                                          default=os.environ.get('LOGNAME', ''),
                                          help='Set username.  Defaults to '
                                          '"LOGNAME" environment variable '
@@ -143,25 +152,20 @@ class OnlineCaClientCLI(object):
 
         get_cert_arg_parser.add_argument("-o", "--out",
                           dest="pem_out_filepath",
-                          metavar="PEM_OUT_FILEPATH",
+                          metavar="<output credential file>",
                           default=self.__class__.PEM_OUT_TO_STDOUT,
                           help="Output path for file containing PEM-encoded "
                                "private key and newly issued certificate.  "
                                "Defaults to stdout")
 
         get_cert_arg_parser.add_argument("-c", "--ca-cert-dir",
-                          dest="cacert_dir",
-                          metavar="CACERT_DIR",
+                          dest="ca_cert_dir",
+                          metavar="<CA certificate directory>",
                           default=self.__class__.DEF_CACERT_DIR,
                           help="Directory containing CA certificate trustroots "
                                "for trusting")
 
-        get_cert_arg_parser.add_argument("-b", "--bootstrap",
-                                       action="store_true",
-                                       dest="bootstrap",
-                                       default=False,
-                                       help="Bootstrap trust in Online "
-                                            "CA server")
+        get_cert_arg_parser.set_defaults(func=self._get_cert)
 
         # Parses from arguments input to this method if set, otherwise parses
         # from sys.argv
@@ -176,7 +180,23 @@ class OnlineCaClientCLI(object):
         # Call appropriate command function assigned via set_defaults calls
         # above
         if hasattr(parsed_args, "func"):
-            parsed_args.func(parsed_args)
+            try:
+                # Suppress insecure SSL connection warning for bootstrap option:
+                # in this case SSL peer verification is being deliberately
+                # disabled in order to initial PKI trust settings
+                if hasattr(parsed_args, "bootstrap"):
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", InsecureRequestWarning)
+                        parsed_args.func(parsed_args)
+                else:
+                    parsed_args.func(parsed_args)
+
+            except Exception as e:
+                if parsed_args.debug:
+                    raise
+                else:
+                    parser.error(e)
+                    raise SystemExit(1)
         else:
             # func attribute is not defined if no arguments are passed
             parser.print_help()
