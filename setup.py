@@ -21,24 +21,24 @@ except ImportError:
 
 setup(
     name =            	'ContrailOnlineCAClient',
-    version =         	'0.3.0',
+    version =         	'0.4.0',
     description =     	'Certificate Authority web service client',
     long_description = 	'''\
 Provides the client interface for an online Certificate Authority web-service.
-This package works with the ``ContrailOnlineCAService`` the server-side 
+This package works with the ``ContrailOnlineCAService`` the server-side
 implementation also available from PyPI.
 
-Web service calls can be made to request a certificate.  The web service 
+Web service calls can be made to request a certificate.  The web service
 interface is RESTful using GET and POST operations.  To request a certificate,
-a Certificate Signing Request is sent as a field with a HTTP POST call.  The 
-service should be hosted over HTTPS.  The client authenticates using HTTP Basic 
+a Certificate Signing Request is sent as a field with a HTTP POST call.  The
+service should be hosted over HTTPS.  The client authenticates using HTTP Basic
 Auth or SSL client authentication.  In the first case, username and password
 are sent.  For the latter, at least a username should be set as this needed to
 configure the subject name of the certificate requested.  If authentication
-succeeds, an X.509 certificate is returned. 
+succeeds, an X.509 certificate is returned.
 
-As well as a Python client, an implementation is included as shell scripts.  
-These require only openssl and wget or curl which are typically available on 
+As well as a Python client, an implementation is included as shell scripts.
+These require only openssl and wget or curl which are typically available on
 Linux/UNIX based systems.
 
 The code has been developed for the Contrail Project, http://contrail-project.eu/
@@ -61,7 +61,7 @@ Examples are contained in ``onlineca.client.test``.
     maintainer_email =  'Philip.Kershaw@stfc.ac.uk',
     url =             	'https://github.com/cedadev/online_ca_client',
     platforms =         ['POSIX', 'Linux', 'Windows'],
-    install_requires =  ['ndg_httpsclient'],
+    install_requires =  ['requests', 'requests_oauthlib'],
     license =           __license__,
     test_suite =        'contrail.security.onlineca.client.test',
     packages =          find_packages(),
@@ -100,5 +100,10 @@ Examples are contained in ``onlineca.client.test``.
         'Topic :: System :: Systems Administration :: Authentication/Directory',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
+    entry_points={
+        'console_scripts': [
+            'online-ca-client = contrail.security.onlineca.client.cli:main',
+             ],
+        },
     zip_safe = False
 )
