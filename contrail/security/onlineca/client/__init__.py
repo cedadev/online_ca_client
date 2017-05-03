@@ -145,6 +145,16 @@ class OnlineCaClient(object):
                                                                 res.reason),
                                               res)
 
+        # Response contains PEM-encoded certificate just issued + any additional
+        # CA certificates in the chain of trust configured on the server-side.
+        # Parse into OpenSSL.crypto.X509 objects
+        cert_s = res.content.decode(encoding='utf-8')
+        cert_list = []
+        for pem_cert_frag in cert_s.split('-----BEGIN CERTIFICATE-----')[1:]:
+            pem_cert = '-----BEGIN CERTIFICATE-----' + pem_cert_frag
+            cert = crypto.load_certificate(crypto.FILETYPE_PEM, pem_cert)
+            cert_list.append(cert)
+
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, res.content)
 
         # Optionally output the private key and certificate together PEM
@@ -154,10 +164,10 @@ class OnlineCaClient(object):
             pem_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
 
             with open(pem_out_filepath, 'wb', 0o400) as pem_out_file:
+                pem_out_file.write(res.content)
                 pem_out_file.write(pem_pkey)
-                pem_out_file.write(pem_cert)
 
-        return key_pair, cert
+        return key_pair, (cert, ) + tuple(cert_list)
 
     def get_certificate(self, username, password, server_url,
                         pem_out_filepath=None):

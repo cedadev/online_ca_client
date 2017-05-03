@@ -195,8 +195,7 @@ class OnlineCaClientCLI(object):
                 if parsed_args.debug:
                     raise
                 else:
-                    parser.error(e)
-                    raise SystemExit(1)
+                    parser.error(str(e))
         else:
             # func attribute is not defined if no arguments are passed
             parser.print_help()
