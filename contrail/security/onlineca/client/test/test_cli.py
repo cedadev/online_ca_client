@@ -32,14 +32,14 @@ class OnlineCaClientCLITestCase(unittest.TestCase):
     'Test Certificate Authority command line interface'
     ONLINECA_GET_CERT_URL = os.environ.get(
                                 "TEST_ONLINECA_GET_CERT_URL",
-                                "https://localhost:5000/onlineca/certificate/")
+                                "http://localhost:10443/certificate/")
 
     ONLINECA_GET_TRUSTROOTS_URL = os.environ.get(
                                "TEST_ONLINECA_GET_TRUSTROOTS_URL",
-                               "https://localhost:5000/onlineca/trustroots/")
+                               "http://localhost:10443/trustroots/")
 
     CACERT_DIR = os.path.join(TEST_DIR, "test-cli-ca")
-    USERNAME = os.environ.get("TEST_ONLINECA_GET_CERT_USERNAME", "another")
+    USERNAME = os.environ.get("TEST_ONLINECA_GET_CERT_USERNAME", "testuser")
     PASSWORD = os.environ.get("TEST_ONLINECA_GET_CERT_PASSWORD", "changeme")
     PEM_OUT_FILEPATH = os.path.join(TEST_DIR, "cli-test-usercert.pem")
 
