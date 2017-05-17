@@ -57,7 +57,7 @@ $ online-ca-client get_trustroots -s https://<hostname>/onlineca/trustroots -b -
 ```
 Obtain a certificate:
 ```
-$ online-ca-client get_cert -s https://slcs.ceda.ac.uk/onlineca/certificate/ -l pjkersha -c ./ca-trustroots/ -o ./credentials.pem
+$ online-ca-client get_cert -s https://slcs.somewhere.ac.uk/onlineca/certificate/ -l pjkersha -c ./ca-trustroots/ -o ./credentials.pem
 ```
 
 ### Python API ###
@@ -69,9 +69,9 @@ Initialise setting directory to store CA certificate trust roots:
 ```
 Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directory:
 ```
->>> trustroots = onlineca_client.get_trustroots("https://slcs.ceda.ac.uk/onlineca/trustroots/", bootstrap=True, write_to_ca_cert_dir=True)
+>>> trustroots = onlineca_client.get_trustroots("https://slcs.somewhere.ac.uk/onlineca/trustroots/", bootstrap=True, write_to_ca_cert_dir=True)
 ```
 Get certificate - key and certificate(s) may be optionally written to a file
 ```
->>> key_pair, certs = onlineca_client.get_certificate(username, password, 'https://slcs.ceda.ac.uk/onlineca/certificate/', pem_out_filepath="./credentials.pem")
+>>> key_pair, certs = onlineca_client.get_certificate(username, password, 'https://slcs.somewhere.ac.uk/onlineca/certificate/', pem_out_filepath="./credentials.pem")
 ```
