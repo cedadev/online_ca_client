@@ -25,7 +25,10 @@ This has been developed and tested for Python 2.7 and 3.5.
 
 Installation
 ------------
-Installation can be performed using pip.
+Installation can be performed using pip:
+```
+$ pip install ContrailOnlineCAClient
+```
 
 Configuration
 -------------
