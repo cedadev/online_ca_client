@@ -31,17 +31,45 @@ Configuration
 -------------
 Examples are contained in ``onlineca.client.test``.
 
-Shell script client - bootstrapping trust saving CA trust root certificates in ``./ca`` directory: 
+Shell script client
+===================
+Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directory: 
 ```
-$ ./onlineca-get-trustroots.sh -U https://<hostname>/onlineca/trustroots/ -c ./ca -b
+$ ./onlineca-get-trustroots.sh -U https://<hostname>/onlineca/trustroots/ -c ./ca-trustroots -b
 Bootstrapping Short-Lived Credential Service root of trust.
-Trust roots have been installed in ./ca.
+Trust roots have been installed in ./ca-trustroots.
 ```
-Obtaining a certificate:
+Obtain a certificate:
 ```
-$ ./onlineca-get-cert.sh -U https://<hostname>/onlineca/certificate/ -l <username> -c ./ca
+$ ./onlineca-get-cert.sh -U https://<hostname>/onlineca/certificate/ -l <username> -c ./ca-trustroots
 Enter Short-Lived Credential phrase: 
 -----BEGIN CERTIFICATE-----
 ...
+
+Python command line client
+==========================
+Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directory:
+```
+$ online-ca-client get_trustroots -s https://<hostname>/onlineca/trustroots -b -c ./ca-trustroots
+```
+Obtain a certificate:
+```
+$ online-ca-client get_cert -s https://slcs.ceda.ac.uk/onlineca/certificate/ -l pjkersha -c ./ca-trustroots/ -o ./credentials.pem
 ```
 
+Python API
+==========
+Initialise setting directory to store CA certificate trust roots:
+```
+>>> from contrail.security.onlineca.client import OnlineCaClient
+>>> onlineca_client = OnlineCaClient()
+>>> onlineca_client.ca_cert_dir = "./ca-trustroots"
+```
+Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directory:
+```
+>>> trustroots = onlineca_client.get_trustroots("https://slcs.ceda.ac.uk/onlineca/trustroots/", bootstrap=True, write_to_ca_cert_dir=True)
+```
+Get certificate - key and certificate(s) may be optionally written to a file
+```
+>>> key_pair, certs = onlineca_client.get_certificate(username, password, 'https://slcs.ceda.ac.uk/onlineca/certificate/', pem_out_filepath="./credentials.pem")
+```
