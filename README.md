@@ -31,8 +31,11 @@ Configuration
 -------------
 Examples are contained in ``onlineca.client.test``.
 
-Shell script client
-===================
+Example Clients
+---------------
+The is a shell script client as well as Python command line client and API.
+
+### Shell script client ###
 Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directory: 
 ```
 $ ./onlineca-get-trustroots.sh -U https://<hostname>/onlineca/trustroots/ -c ./ca-trustroots -b
@@ -45,9 +48,9 @@ $ ./onlineca-get-cert.sh -U https://<hostname>/onlineca/certificate/ -l <usernam
 Enter Short-Lived Credential phrase: 
 -----BEGIN CERTIFICATE-----
 ...
+```
 
-Python command line client
-==========================
+### Python command line client ###
 Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directory:
 ```
 $ online-ca-client get_trustroots -s https://<hostname>/onlineca/trustroots -b -c ./ca-trustroots
@@ -57,8 +60,7 @@ Obtain a certificate:
 $ online-ca-client get_cert -s https://slcs.ceda.ac.uk/onlineca/certificate/ -l pjkersha -c ./ca-trustroots/ -o ./credentials.pem
 ```
 
-Python API
-==========
+### Python API ###
 Initialise setting directory to store CA certificate trust roots:
 ```
 >>> from contrail.security.onlineca.client import OnlineCaClient
