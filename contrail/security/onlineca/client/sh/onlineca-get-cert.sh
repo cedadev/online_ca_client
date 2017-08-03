@@ -76,6 +76,9 @@ if [ $stdin_pass ] && [ $null_password ]; then
     exit 1;
     
 elif [ $stdin_pass ]; then
+    if [ -t 0 ]; then
+        echo -n "Password: " >&2
+    fi
     read password;
     
 elif [ $null_password ]; then
