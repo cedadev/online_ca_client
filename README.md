@@ -60,7 +60,7 @@ $ online-ca-client get_trustroots -s https://<hostname>/onlineca/trustroots -b -
 ```
 Obtain a certificate:
 ```
-$ online-ca-client get_cert -s https://slcs.somewhere.ac.uk/onlineca/certificate/ -l pjkersha -c ./ca-trustroots/ -o ./credentials.pem
+$ online-ca-client get_cert -s https://slcs.somewhere.ac.uk/onlineca/certificate/ -l <username> -c ./ca-trustroots/ -o ./credentials.pem
 ```
 
 ### Python API ###
