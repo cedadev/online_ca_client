@@ -22,7 +22,7 @@ usage="Usage: $cmdname [-U Short-Lived Credential Service URI][-l username] ...\
        -S\t\t\tpass password from stdin rather prompt from tty\n
        -o <filepath>\t\tOutput location of end entity certificate or delegated proxy (default to stdout)\n
        -c <directory path>\tDirectory containing the trusted CA (Certificate Authority) certificates.  These are used to\n
-       \t\t\tverify the identity of the Short-Lived Credential Service.  Defaults to\n 
+       \t\t\tverify the identity of the Short-Lived Credential Service.  Defaults to\n
        \t\t\t${HOME}/.globus/certificates or\n
        \t\t\t/etc/grid-security/certificates if running as root.\n
 "
@@ -95,11 +95,11 @@ certreqfilepath="/tmp/$UID-$RANDOM.csr"
 # Generate key pair and request.  The key file is written to the 'key' var
 key=$(openssl req -new -newkey rsa:2048 -nodes -keyout /dev/stdout -subj /CN=dummy -out $certreqfilepath 2> /dev/null)
 
-# URL Encode certificate request - allow for '+' symbol in the base64 charset - 
+# URL Encode certificate request - allow for '+' symbol in the base64 charset -
 # needs to be hex equivalent
 
 # Post request to Short-Lived Credential service passing username/password for HTTP Basic
-# auth based authentication.  
+# auth based authentication.
 encoded_certreq=$(cat $certreqfilepath|sed s/+/%2B/g)
 
 # Clean up certificate request temporary file
@@ -119,8 +119,10 @@ if [ "$responsecode" != "200" ]; then
     exit 1
 fi
 
-# Extract the certificate
-cert=$(echo "$response" | openssl x509)
+# Extract the certificate(s) - there may be additional certificates forming
+# part of a chain of trust back to a root CA.
+cert=$(echo "$response" | sed -n '/BEGIN CERTIFICATE/,/END CERTIFICATE/p')
+
 # Simple sanity check on extracted cert
 if [[ $cert != -----BEGIN\ CERTIFICATE-----* ]]; then
     echo "Expecting certificate in response; got:"
@@ -131,5 +133,5 @@ fi
 # Output certificate
 echo "$cert" > $outfilepath
 
-# Add key 
+# Add key
 echo "$key" >> $outfilepath
