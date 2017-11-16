@@ -21,7 +21,7 @@ except ImportError:
 
 setup(
     name =            	'ContrailOnlineCAClient',
-    version =         	'0.4.0',
+    version =         	'0.4.1',
     description =     	'Certificate Authority web service client',
     long_description = 	'''\
 Provides the client interface for an online Certificate Authority web-service.
@@ -61,7 +61,7 @@ Examples are contained in ``onlineca.client.test``.
     maintainer_email =  'Philip.Kershaw@stfc.ac.uk',
     url =             	'https://github.com/cedadev/online_ca_client',
     platforms =         ['POSIX', 'Linux', 'Windows'],
-    install_requires =  ['requests', 'requests_oauthlib'],
+    install_requires =  ['requests', 'requests_oauthlib', 'six', 'PyOpenSSL'],
     license =           __license__,
     test_suite =        'contrail.security.onlineca.client.test',
     packages =          find_packages(),
