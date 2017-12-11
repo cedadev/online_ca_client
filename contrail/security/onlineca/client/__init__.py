@@ -132,10 +132,7 @@ class OnlineCaClient(object):
         key_pair = self.__class__.create_key_pair()
         cert_req = self.__class__.create_cert_req(key_pair)
 
-        # Convert plus chars to make it safe for HTTP POST
-        encoded_cert_req = cert_req.replace(b'+', b'%2B')
-        req = b"%s=%s\n" % (self.__class__.CERT_REQ_POST_PARAM_KEYNAME,
-                            encoded_cert_req)
+        req = {self.__class__.CERT_REQ_POST_PARAM_KEYNAME: cert_req}
 
         res = session.post(server_url, data=req, verify=self.ca_cert_dir)
         if not res.ok:
