@@ -16,20 +16,15 @@ import errno
 
 import six
 from pip._vendor.requests.sessions import session
-from requests.sessions import Session
+import requests
 import requests_oauthlib
+from OpenSSL import SSL, crypto
 
 if six.PY2:
     _unicode_conv = lambda string_: string_
 else:
     _unicode_conv = lambda string_: (isinstance(string_, bytes) and
                                      string_.decode() or string_)
-
-import requests
-from requests.auth import HTTPBasicAuth
-import requests_oauthlib
-
-from OpenSSL import SSL, crypto
 
 
 class OnlineCaClientErrorResponse(Exception):
@@ -179,7 +174,7 @@ class OnlineCaClient(object):
         :return: tuple of key pair object and certificate
         """
         session = requests.Session()
-        session.auth = HTTPBasicAuth(username, password)
+        session.auth = requests.auth.HTTPBasicAuth(username, password)
 
         return self.get_certificate_using_session(session, server_url,
                                             pem_out_filepath=pem_out_filepath)

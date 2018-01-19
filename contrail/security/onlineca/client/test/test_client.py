@@ -64,12 +64,19 @@ class OnlineCaClientTestCase(unittest.TestCase):
         try:
             password = self.cfg.get(opt_name, 'password')
         except NoOptionError:
-            password = getpass('OnlineCaClientTestCase.test02_get_certificate password: ')
+            password = getpass('OnlineCaClientTestCase.test02_get_certificate '
+                               'password: ')
 
         server_url = self.cfg.get(opt_name, 'uri')
 
         onlineca_client = OnlineCaClient()
-        onlineca_client.ca_cert_dir = TEST_CA_DIR
+
+        # Set a specific dir for trustroots if the option exists.  If omitted
+        # OpenSSL will default to the system CA trust bundle
+        try:
+            onlineca_client.ca_cert_dir = self.cfg.get(opt_name, 'ca_dir')
+        except NoOptionError:
+            pass
 
         key_pair, certs = onlineca_client.get_certificate(username, password,
                                 server_url, pem_out_filepath=pem_out_filepath)
