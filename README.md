@@ -17,7 +17,7 @@ As well as a Python client, an implementation is included as shell scripts.
 These require only openssl and wget or curl which are typically available on
 Linux/UNIX based systems.
 
-The code was originall developed for the EU Framework 7 programme Contrail
+The code was originally developed for the EU Framework 7 programme Contrail
 Project.
 
 Prerequisites
