@@ -104,10 +104,10 @@ class OnlineCaClient(object):
         # Add the public key to the request
         cert_req.sign(key_pair, message_digest)
 
-        cert_req = crypto.dump_certificate_request(crypto.FILETYPE_PEM,
-                                                   cert_req)
+        cert_req_s = crypto.dump_certificate_request(crypto.FILETYPE_PEM,
+                                                     cert_req)
 
-        return cert_req
+        return cert_req_s
 
     def get_certificate_using_session(self, session, server_url,
                                       pem_out_filepath=None):
