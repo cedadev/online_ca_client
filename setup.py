@@ -21,7 +21,7 @@ except ImportError:
 
 setup(
     name =            	'ContrailOnlineCAClient',
-    version =         	'0.4.1',
+    version =         	'0.4.2',
     description =     	'Certificate Authority web service client',
     long_description = 	'''\
 Provides the client interface for an online Certificate Authority web-service.
@@ -41,7 +41,7 @@ As well as a Python client, an implementation is included as shell scripts.
 These require only openssl and wget or curl which are typically available on
 Linux/UNIX based systems.
 
-The code has been developed for the Contrail Project, http://contrail-project.eu/
+The code has been developed for the EU Contrail Project.
 
 Prerequisites
 =============

@@ -16,20 +16,15 @@ import errno
 
 import six
 from pip._vendor.requests.sessions import session
-from requests.sessions import Session
+import requests
 import requests_oauthlib
+from OpenSSL import SSL, crypto
 
 if six.PY2:
     _unicode_conv = lambda string_: string_
 else:
     _unicode_conv = lambda string_: (isinstance(string_, bytes) and
                                      string_.decode() or string_)
-
-import requests
-from requests.auth import HTTPBasicAuth
-import requests_oauthlib
-
-from OpenSSL import SSL, crypto
 
 
 class OnlineCaClientErrorResponse(Exception):
@@ -104,10 +99,10 @@ class OnlineCaClient(object):
         # Add the public key to the request
         cert_req.sign(key_pair, message_digest)
 
-        cert_req = crypto.dump_certificate_request(crypto.FILETYPE_PEM,
-                                                   cert_req)
+        cert_req_s = crypto.dump_certificate_request(crypto.FILETYPE_PEM,
+                                                     cert_req)
 
-        return cert_req
+        return cert_req_s
 
     def get_certificate_using_session(self, session, server_url,
                                       pem_out_filepath=None):
@@ -132,10 +127,7 @@ class OnlineCaClient(object):
         key_pair = self.__class__.create_key_pair()
         cert_req = self.__class__.create_cert_req(key_pair)
 
-        # Convert plus chars to make it safe for HTTP POST
-        encoded_cert_req = cert_req.replace(b'+', b'%2B')
-        req = b"%s=%s\n" % (self.__class__.CERT_REQ_POST_PARAM_KEYNAME,
-                            encoded_cert_req)
+        req = {self.__class__.CERT_REQ_POST_PARAM_KEYNAME: cert_req}
 
         res = session.post(server_url, data=req, verify=self.ca_cert_dir)
         if not res.ok:
@@ -182,7 +174,7 @@ class OnlineCaClient(object):
         :return: tuple of key pair object and certificate
         """
         session = requests.Session()
-        session.auth = HTTPBasicAuth(username, password)
+        session.auth = requests.auth.HTTPBasicAuth(username, password)
 
         return self.get_certificate_using_session(session, server_url,
                                             pem_out_filepath=pem_out_filepath)
