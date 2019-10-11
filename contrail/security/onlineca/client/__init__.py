@@ -15,7 +15,6 @@ import os
 import errno
 
 import six
-from pip._vendor.requests.sessions import session
 import requests
 import requests_oauthlib
 from OpenSSL import SSL, crypto

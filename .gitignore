@@ -3,3 +3,5 @@ contrail/security/onlineca/client/test/cli-test-usercert.pem
 contrail/security/onlineca/client/test/test-cli-ca/
 /dist/
 /build/
+*.pyc
+.idea
