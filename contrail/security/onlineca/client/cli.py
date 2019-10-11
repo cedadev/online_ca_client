@@ -62,7 +62,7 @@ class OnlineCaClientCLI(object):
         '''Retrieve Certificate Authority certificates for bootstrapping trust
         with the Online CA service
 
-        :type    argparse.Namespace
+        :type      cmdline_args: argparse.Namespace
         :param     cmdline_args: command line arguments from argparse
         ArgumentParser
         '''
