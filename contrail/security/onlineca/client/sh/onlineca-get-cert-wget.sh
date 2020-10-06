@@ -89,11 +89,13 @@ if [ -z $outfilepath ]; then
     fi
 fi
 
-# Make a temporary file location for the certificate request
+# Make a temporary file location for the certificate request and key
+keyfilepath="/tmp/$UID-$RANDOM.key"
 certreqfilepath="/tmp/$UID-$RANDOM.csr"
 
 # Generate key pair and request.  The key file is written to the 'key' var
-key=$(openssl req -new -newkey rsa:2048 -nodes -keyout /dev/stdout -subj /CN=dummy -out $certreqfilepath 2> /dev/null)
+openssl req -new -newkey rsa:2048 -nodes -keyout $keyfilepath -subj //\CN=dummy -out $certreqfilepath 2> /dev/null
+key=$(cat $keyfilepath)
 
 # URL Encode certificate request - allow for '+' symbol in the base64 charset -
 # needs to be hex equivalent
@@ -102,7 +104,8 @@ key=$(openssl req -new -newkey rsa:2048 -nodes -keyout /dev/stdout -subj /CN=dum
 # auth based authentication.
 encoded_certreq=$(cat $certreqfilepath|sed s/+/%2B/g)
 
-# Clean up certificate request temporary file
+# Clean up certificate request and key temporary files
+rm -f $keyfilepath
 rm -f $certreqfilepath
 
 response=$(wget --secure-protocol TLSv1 --ca-directory=$cadir \
