@@ -7,7 +7,6 @@ __date__ = "28/05/12"
 __copyright__ = "Copyright 2019 United Kingdom Research and Innovation"
 __license__ = "BSD - see LICENSE file in top-level directory"
 __contact__ = "Philip.Kershaw@stfc.ac.uk"
-__revision__ = '$Id$'
 import logging
 log = logging.getLogger(__name__)
 import base64
@@ -19,6 +18,7 @@ from requests.sessions import session
 import requests
 import requests_oauthlib
 from OpenSSL import SSL, crypto
+from asn1crypto.x509 import BasicConstraints
 
 if six.PY2:
     _unicode_conv = lambda string_: string_
@@ -47,6 +47,9 @@ class OnlineCaClient(object):
     CERT_REQ_POST_PARAM_KEYNAME = b'certificate_request'
     TRUSTED_CERTS_FIELDNAME = b'TRUSTED_CERTS'
     TRUSTED_CERTS_FILEDATA_FIELDNAME_PREFIX = b'FILEDATA_'
+    PEM_CERT_BEGIN_DELIM = '-----BEGIN CERTIFICATE-----'
+    X509_BASIC_CONSTR_FIELDNAME = b'basicConstraints'
+    X509_BASIC_CONSTR_CAFLAG_FIELDNAME = 'ca'
 
     def __init__(self):
         self.__ca_cert_dir = None
@@ -141,25 +144,68 @@ class OnlineCaClient(object):
         # CA certificates in the chain of trust configured on the server-side.
         # Parse into OpenSSL.crypto.X509 objects
         cert_s = res.content.decode(encoding='utf-8')
-        cert_list = []
-        for pem_cert_frag in cert_s.split('-----BEGIN CERTIFICATE-----')[1:]:
-            pem_cert = '-----BEGIN CERTIFICATE-----' + pem_cert_frag
-            cert = crypto.load_certificate(crypto.FILETYPE_PEM, pem_cert)
-            cert_list.append(cert)
+        certchain = []
+        endentity_cert = None
+        for pem_cert_frag in cert_s.split(self.PEM_CERT_BEGIN_DELIM)[1:]:
+            pem_cert = self.PEM_CERT_BEGIN_DELIM + pem_cert_frag
 
-        cert = crypto.load_certificate(crypto.FILETYPE_PEM, res.content)
+            cert = crypto.load_certificate(crypto.FILETYPE_PEM, pem_cert)
+
+            # Separate certificates into the end entity certificate and any
+            # certificates in an intermediate chain of trust to the root.
+            # The end entity certificate ought to be the first but this code
+            # does a sanity check
+            if self._is_ca_certificate(cert):
+                # If it's a CA certificate, then it must be part of the 
+                # intermediate chain. Nb. RFC3820 Proxy certificates are not 
+                # supported here
+                certchain.append(cert)
+            else:
+                # check for more than one end entity certificate
+                if endentity_cert is not None:
+                    raise Exception('Multiple end-entity certificates found '
+                        'in response: certificates with subject, '
+                        f'{endentity_cert.get_subject()} and {cert.get_subject()}')
+
+                endentity_cert = cert
 
         # Optionally output the private key and certificate together PEM
-        # encoded in a single file
+        # encoded in a single file. Any additional certificate chain is appended
+        # to the end of the output
         if pem_out_filepath:
             pem_pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_pair)
-            pem_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+            pem_endentity_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, 
+                                                         endentity_cert)
+            pem_certchain = b""
+            for cacert in certchain:
+                pem_certchain += crypto.dump_certificate(crypto.FILETYPE_PEM, cacert)
 
             with open(pem_out_filepath, 'wb', 0o400) as pem_out_file:
-                pem_out_file.write(res.content)
+                pem_out_file.write(pem_endentity_cert)
                 pem_out_file.write(pem_pkey)
+                pem_out_file.write(pem_certchain)
 
-        return key_pair, (cert, ) + tuple(cert_list)
+        return key_pair, (endentity_cert, ) + tuple(certchain)
+
+    @classmethod
+    def _is_ca_certificate(cls, cert):
+        '''Helper method for checking whether a certificate is a CA certificate.
+        It checks the BasicConstraints extension for ca flag set. This method
+        is used for parsing and organising response from get certificate
+        call.
+        '''
+        n_ext = cert.get_extension_count()
+        for i in range(n_ext):
+            ext = cert.get_extension(i)
+            short_name = ext.get_short_name()
+            if short_name == cls.X509_BASIC_CONSTR_FIELDNAME:
+                ext_dat = ext.get_data()
+                parsed_ext_dat = BasicConstraints.load(ext_dat)
+                if parsed_ext_dat.native.get(
+                        cls.X509_BASIC_CONSTR_CAFLAG_FIELDNAME, False) is True:
+                    return True
+
+        return False
 
     def get_certificate(self, username, password, server_url,
                         pem_out_filepath=None):

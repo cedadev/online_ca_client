@@ -79,12 +79,12 @@ class OnlineCaClientTestCase(unittest.TestCase):
 
         key_pair, certs = onlineca_client.get_certificate(username, password,
                                 server_url, pem_out_filepath=pem_out_filepath)
-        self.assert_(key_pair)
-        self.assert_(certs[0])
+        self.assertTrue(key_pair)
+        self.assertTrue(certs[0])
 
         subj = certs[0].get_subject()
-        self.assert_(subj)
-        self.assert_(subj.CN)
+        self.assertTrue(subj)
+        self.assertTrue(subj.CN)
 
         log.info("Returned key pair\n%r",
 						crypto.dump_privatekey(crypto.FILETYPE_PEM, key_pair))

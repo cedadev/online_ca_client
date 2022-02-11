@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 #
 # Client script for Short-Lived Credential Service interface based on openssl and
 # curl
@@ -142,8 +142,25 @@ if [[ $responsemsg != -----BEGIN\ CERTIFICATE-----* ]]; then
     exit 1
 fi
 
+# Separate out End Entity Certificate from any other certificates returned in 
+# the trust chain. This is needed so that there is ordering consistent with
+# the behaviour of MyProxyCA
+
+# Escape line endings for private key so that it can work with awk
+esc_key=$(echo ${key} | sed '$!s@$@\\@g')
+
+# Similarly, escape line endings for certificate chain
+esc_certchain=$(echo "$responsemsg"| sed '$!s@$@\\@g')
+
+# Inject private key content into response immediately after the first 
+# certificate (i.e. the End Entity Certificate) in the certificate chain
+output=$(awk -v certchain=${esc_certchain} -v key=${esc_key} 'BEGIN {len = split(certchain, arr, "-----END CERTIFICATE-----"); for (i=1; i < len; i++) {printf "%s-----END CERTIFICATE-----", arr[i]; if (i == 1) {printf "\n%s", key} }; print}')
+
+# Output certificates with private key
+echo $output > $outfilepath
+
 # Output certificate
-echo "$responsemsg" > $outfilepath
+#echo "$responsemsg" > $outfilepath
 
 # Add key 
-echo "$key" >> $outfilepath
+#echo "$key" >> $outfilepath
