@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 #
 # Client script for Short-Lived Credential Service interface based on openssl and
 # curl
@@ -125,13 +125,14 @@ key=$(openssl req -new -newkey rsa:2048 -nodes -keyout /dev/stdout -subj /CN=dum
 # Alterations to change Base 64 encoding to URL safe Base 64
 encoded_certreq=$(cat $certreqfilepath|sed s/+/%2B/g)
 
-response=$(curl $uri --tlsv1 -u $username:$password --data "certificate_request=$encoded_certreq" --capath $cadir -w " %{http_code}" -s -S $clientcert_opt $clientkey_opt)
+response=$(curl $uri --tlsv1 -u $username:$password \
+--data "certificate_request=$encoded_certreq" --capath $cadir \
+-w " %{http_code}" -s -S $clientcert_opt $clientkey_opt)
 
 responsemsg=$(echo "$response"|sed '$s/ *\([^ ]* *\)$//')
 responsecode=$(echo $response|awk '{print $NF}')
 if [ "$responsecode" != "200" ]; then
-    echo "Online CA server returned error code $responsecode:" >&2
-    echo "$responsemsg" >&2
+    echo "Online CA server returned error code $responsecode: $responsemsg" >&2
     exit 1
 fi
 
@@ -147,20 +148,23 @@ fi
 # the behaviour of MyProxyCA
 
 # Escape line endings for private key so that it can work with awk
-esc_key=$(echo ${key} | sed '$!s@$@\\@g')
+esc_key=$(echo "${key}" | sed '$!s@$@\\@g')
 
 # Similarly, escape line endings for certificate chain
 esc_certchain=$(echo "$responsemsg"| sed '$!s@$@\\@g')
 
 # Inject private key content into response immediately after the first 
 # certificate (i.e. the End Entity Certificate) in the certificate chain
-output=$(awk -v certchain=${esc_certchain} -v key=${esc_key} 'BEGIN {len = split(certchain, arr, "-----END CERTIFICATE-----"); for (i=1; i < len; i++) {printf "%s-----END CERTIFICATE-----", arr[i]; if (i == 1) {printf "\n%s", key} }; print}')
+output=$(awk -v certchain="${esc_certchain}" -v key="${esc_key}" 'BEGIN {\
+    len = split(certchain, arr, "-----END CERTIFICATE-----"); \
+    for (i=1; i < len; i++) {\
+        printf "%s-----END CERTIFICATE-----", arr[i]; \
+        if (i == 1) {\
+            printf "\n%s", key \
+        } \
+    }; \
+    print \
+}')
 
 # Output certificates with private key
-echo $output > $outfilepath
-
-# Output certificate
-#echo "$responsemsg" > $outfilepath
-
-# Add key 
-#echo "$key" >> $outfilepath
+echo "$output" > $outfilepath

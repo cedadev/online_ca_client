@@ -37,8 +37,6 @@ def callback():
     callback URL. With this redirection comes an authorization code included
     in the redirect URL. We will use that to obtain an access token.
     """
-
-    import pdb;pdb.set_trace()
     oauth2_session = OAuth2Session(client_id, state=session['oauth_state'])
     token = oauth2_session.fetch_token(token_url, client_secret=client_secret,
                                authorization_response=request.url)
