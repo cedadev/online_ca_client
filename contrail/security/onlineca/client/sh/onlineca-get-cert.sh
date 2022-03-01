@@ -85,7 +85,7 @@ elif [ $null_password ]; then
     password="";
 else
     stty -echo
-    read -p "Enter pass phrase: " password; echo
+    read -r -p "Enter pass phrase: " password; echo
     stty echo
 fi
 

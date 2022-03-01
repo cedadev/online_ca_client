@@ -64,7 +64,7 @@ if [ $stdin_pass ]; then
     read password;
 else
     stty -echo
-    read -p "Enter Short-Lived Credential phrase: " password; echo
+    read -r -p "Enter Short-Lived Credential phrase: " password; echo
     stty echo
 fi
 
