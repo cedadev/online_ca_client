@@ -9,20 +9,60 @@ __copyright__ = "Copyright 2022 United Kingdom Research and Innovation"
 __license__ = "BSD - see LICENSE file in top-level directory"
 __contact__ = "Philip.Kershaw@stfc.ac.uk"
 import os
-import socket
+from queue import Queue
+import contextlib
+import time
+import threading
 
-from requests_oauthlib import OAuth2Session
-from flask import Flask, request, redirect, session, url_for
 import yaml
-from waitress import serve
+import uvicorn 
+from uvicorn.protocols.http.h11_impl import H11Protocol
+from quart import Quart, request, redirect, session
+from requests_oauthlib import OAuth2Session
 
 from contrail.security.onlineca.client import OnlineCaClient
 
 
-app = Flask(__name__)
-socket_ = None
+# Make a queue object to communicate that the OAuth flow has been completed
+OAUTH_FLOW_COMPLETE = Queue()
+            
+# Application to manage OAuth flow
+app = Quart(__name__)
+app.secret_key = os.urandom(24)
 THIS_DIR = os.path.dirname(__file__)
 SETTINGS_FILEPATH = os.path.join(THIS_DIR, "test", "idp.yaml")
+
+
+class OAuthFlowH11Protocol(H11Protocol):
+    CALLBACK_PATH = "/callback"
+
+    def on_response_complete(self):
+        super().on_response_complete()
+
+        # Kill HTTP server once callback response has been completed
+        if self.scope.get("path") == self.CALLBACK_PATH:
+            # raise KeyboardInterrupt
+            OAUTH_FLOW_COMPLETE.put(self)
+
+
+class OAuthAuthorisationCodeClientServer(uvicorn.Server):
+    """Threaded Uvicorn server which receives content from an external queue
+    to signal to shutdown the service
+    """
+    @contextlib.contextmanager
+    def run_in_thread(self) -> None:
+        thread = threading.Thread(target=self.run)
+        thread.start()
+        try:
+            # Flow complete Queue object is used to flag that the OAuth
+            # process has been completed
+            while OAUTH_FLOW_COMPLETE.qsize() < 1:
+                time.sleep(1e-3)
+            yield
+        finally:
+            self.should_exit = True
+            thread.join()
+
 
 def read_settings_file(settings_filepath: str) -> dict:
     with open(settings_filepath) as settings_file:
@@ -32,8 +72,9 @@ def read_settings_file(settings_filepath: str) -> dict:
 
 settings = read_settings_file(SETTINGS_FILEPATH)
 
+
 @app.route("/")
-def get_user_authorisation():
+async def get_user_authorisation():
     """Step 1: User Authorization.
 
     Redirect the user/resource owner to the OAuth provider (i.e. Github)
@@ -48,8 +89,9 @@ def get_user_authorisation():
     session['oauth_state'] = state
     return redirect(authorization_url)
 
+
 @app.route("/callback")
-def get_access_token():
+async def get_access_token():
     """ Step 3: Retrieving an access token.
 
     The user has been redirected back from the provider to your registered
@@ -66,15 +108,7 @@ def get_access_token():
     # in /profile.
     session['oauth_token'] = token
 
-    return redirect(url_for('.close'))
-    
-
-@app.route("/close")
-def close():
-    socket_.close()
-
-def get_access_token():
-    pass
+    return 'Success'
 
 
 def get_certificate():
@@ -91,19 +125,26 @@ def get_certificate():
     return str(response)
 
 
-if __name__ == "__main__":
+def main():
     # This allows us to use a plain HTTP callback
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
     
-    app.secret_key = os.urandom(24)
-    
-    socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    socket_.bind(('127.0.0.1', 5000))
-    # app.run(debug=True, host='0.0.0.0')
-    # app.run(host='0.0.0.0')
-    # serve(app, port=5000, threads=1)
-    try:
-        serve(app, sockets=[socket_])
-    except Exception as e:
+    module_name = os.path.basename(__file__).split('.')[0]
+
+    config = uvicorn.Config(f"{module_name}:app", host="127.0.0.1", port=5000,
+                            http=OAuthFlowH11Protocol, log_level="info")
+    server = OAuthAuthorisationCodeClientServer(config=config)
+
+    with server.run_in_thread():
+        # Server started.
         pass
+
+    # Server stopped.
+    print ("completed")
+
+
+if __name__ == "__main__":
+    main()
+
+
 
