@@ -62,7 +62,7 @@ Examples are contained in ``onlineca.client.test``.
     url =             	'https://github.com/cedadev/online_ca_client',
     platforms =         ['POSIX', 'Linux', 'Windows'],
     install_requires =  ['requests_oauthlib', 'six', 'PyOpenSSL', 'asn1crypto',
-                         'flask', 'pyyaml', 'waitress'],
+                         'quart', 'pyyaml', 'uvicorn'],
     license =           __license__,
     test_suite =        'contrail.security.onlineca.client.test',
     packages =          find_packages(),

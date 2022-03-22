@@ -9,26 +9,27 @@ __copyright__ = "Copyright 2022 United Kingdom Research and Innovation"
 __license__ = "BSD - see LICENSE file in top-level directory"
 __contact__ = "Philip.Kershaw@stfc.ac.uk"
 import os
-from queue import Queue
-import contextlib
 import time
-import threading
+from queue import Queue
+import webbrowser
+import json
 
 import yaml
 import uvicorn 
 from uvicorn.protocols.http.h11_impl import H11Protocol
+from uvicorn.lifespan.on import LifespanOn
 from quart import Quart, request, redirect, session
 from requests_oauthlib import OAuth2Session
 
 from contrail.security.onlineca.client import OnlineCaClient
-
+from contrail.security.onlineca.client.web_server import StoppableWebServer
 
 # Make a queue object to communicate that the OAuth flow has been completed
-OAUTH_FLOW_COMPLETE = Queue()
+SHUTDOWN_QUEUE = Queue()
             
-# Application to manage OAuth flow
-app = Quart(__name__)
-app.secret_key = os.urandom(24)
+# Quart application to manage OAuth flow
+oauth_onlineca_client_web_app = Quart(__name__)
+oauth_onlineca_client_web_app.secret_key = os.urandom(24)
 THIS_DIR = os.path.dirname(__file__)
 SETTINGS_FILEPATH = os.path.join(THIS_DIR, "test", "idp.yaml")
 
@@ -41,27 +42,19 @@ class OAuthFlowH11Protocol(H11Protocol):
 
         # Kill HTTP server once callback response has been completed
         if self.scope.get("path") == self.CALLBACK_PATH:
-            # raise KeyboardInterrupt
-            OAUTH_FLOW_COMPLETE.put(self)
+            # Signal to server via queue object
+            SHUTDOWN_QUEUE.put(True)
 
 
-class OAuthAuthorisationCodeClientServer(uvicorn.Server):
-    """Threaded Uvicorn server which receives content from an external queue
-    to signal to shutdown the service
-    """
-    @contextlib.contextmanager
-    def run_in_thread(self) -> None:
-        thread = threading.Thread(target=self.run)
-        thread.start()
-        try:
-            # Flow complete Queue object is used to flag that the OAuth
-            # process has been completed
-            while OAUTH_FLOW_COMPLETE.qsize() < 1:
-                time.sleep(1e-3)
-            yield
-        finally:
-            self.should_exit = True
-            thread.join()
+class OAuthFlowStoppableWebServer(StoppableWebServer):
+    """Extend web server to allow launch of browser window on start-up"""
+    HOSTNAME = "localhost"
+
+    def thread_callback(self):
+        if self.started and not getattr(self, "launched_browser", False):
+            time.sleep(1)
+            webbrowser.open(f"http://{self.HOSTNAME}:{self.config.port}")
+            self.launched_browser = True
 
 
 def read_settings_file(settings_filepath: str) -> dict:
@@ -73,7 +66,7 @@ def read_settings_file(settings_filepath: str) -> dict:
 settings = read_settings_file(SETTINGS_FILEPATH)
 
 
-@app.route("/")
+@oauth_onlineca_client_web_app.route("/")
 async def get_user_authorisation():
     """Step 1: User Authorization.
 
@@ -90,7 +83,7 @@ async def get_user_authorisation():
     return redirect(authorization_url)
 
 
-@app.route("/callback")
+@oauth_onlineca_client_web_app.route("/callback")
 async def get_access_token():
     """ Step 3: Retrieving an access token.
 
@@ -103,26 +96,44 @@ async def get_access_token():
                                 client_secret=settings['client_secret'],
                                 authorization_response=request.url)
 
-    # At this point you can fetch protected resources but lets save
-    # the token and show how this is done from a persisted token
-    # in /profile.
-    session['oauth_token'] = token
+    # Save token in a file
+    save_tok(token)
 
-    return 'Success'
+    return ('Successfully obtained access token for Online CA Client. You can '
+            'close this browser tab now')
+
+def save_tok(token, tok_filepath=None):
+    if tok_filepath is None:
+        tok_filepath = os.path.join(THIS_DIR, "token.json")
+
+    tok_file_content = json.dumps(token)
+
+    with open(tok_filepath, "w") as tok_file:
+        tok_file.write(tok_file_content)
 
 
-def get_certificate():
+def read_tok(tok_filepath=None):
+    if tok_filepath is None:
+        tok_filepath = os.path.join(THIS_DIR, "token.json")
+    
+    with open(tok_filepath) as tok_file:
+        tok_file_content = tok_file.read()
+
+    return json.loads(tok_file_content)
+
+
+def get_certificate() -> tuple:
     """Fetching a protected resource using an OAuth 2 token.
     """
-    oauth2_session = OAuth2Session(settings['client_id'], token=session['oauth_token'])
+    token = read_tok()
+
+    oauth2_session = OAuth2Session(settings['client_id'], token=token)
 
     online_ca_clnt = OnlineCaClient()
 
     # Scope setting is also the URI to the resource - the certificate issuing 
     # endpoint
-    response = online_ca_clnt.get_certificate_using_session(oauth2_session, settings['scope'])
-
-    return str(response)
+    return online_ca_clnt.get_certificate_using_session(oauth2_session, settings['scope'])
 
 
 def main():
@@ -130,14 +141,15 @@ def main():
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
     
     module_name = os.path.basename(__file__).split('.')[0]
-
-    config = uvicorn.Config(f"{module_name}:app", host="127.0.0.1", port=5000,
-                            http=OAuthFlowH11Protocol, log_level="info")
-    server = OAuthAuthorisationCodeClientServer(config=config)
+    port_num = 5000
+    config = uvicorn.Config(f"{module_name}:oauth_onlineca_client_web_app", 
+                            host="127.0.0.1", port=port_num, http=OAuthFlowH11Protocol,
+                            log_level="info")
+    server = OAuthFlowStoppableWebServer(config, SHUTDOWN_QUEUE)
 
     with server.run_in_thread():
         # Server started.
-        pass
+        response = get_certificate()
 
     # Server stopped.
     print ("completed")
