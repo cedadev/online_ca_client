@@ -8,10 +8,12 @@ __copyright__ = "Copyright 2019 United Kingdom Research and Innovation"
 __license__ = "BSD - see LICENSE file in top-level directory"
 __contact__ = "Philip.Kershaw@stfc.ac.uk"
 import logging
+import stat
 log = logging.getLogger(__name__)
 import base64
 import os
 import errno
+import json
 
 import six
 from requests.sessions import session
@@ -50,6 +52,12 @@ class OnlineCaClient(object):
     PEM_CERT_BEGIN_DELIM = '-----BEGIN CERTIFICATE-----'
     X509_BASIC_CONSTR_FIELDNAME = b'basicConstraints'
     X509_BASIC_CONSTR_CAFLAG_FIELDNAME = 'ca'
+
+    # Optionally, OAuth Access Token can be stored and retrieved from this 
+    # default location
+    DEF_OAUTH_TOK_FILENAME = ".onlinecaclient_token.json"
+    DEF_OAUTH_TOK_FILEPATH = os.path.join(os.environ['HOME'], 
+                                        DEF_OAUTH_TOK_FILENAME)
 
     def __init__(self):
         self.__ca_cert_dir = None
@@ -291,3 +299,53 @@ class OnlineCaClient(object):
                     trustroot_file.write(file_contents)
 
         return files_dict
+
+    @classmethod
+    def save_oauth_tok(cls, token, tok_filepath=None):
+        """Convenience routine - serialise OAuth token for later re-use.
+
+        Care should be taken to ensure that the content is held securely
+        on the target file system
+        """
+        if tok_filepath is None:
+            tok_filepath = cls.DEF_OAUTH_TOK_FILEPATH
+
+        tok_file_content = json.dumps(token)
+
+        # Write file with user-only rw permissions
+        fname = '/tmp/myfile'
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL  # Refer to "man 2 open".
+        mode = stat.S_IRUSR | stat.S_IWUSR  # 0o600 mode
+        umask = 0o777 ^ mode  # Prevents always downgrading umask to 0.
+
+        # For security, remove file with potentially elevated mode
+        try:
+            os.remove(tok_filepath)
+        except OSError:
+            pass
+
+        # Open file descriptor
+        umask_original = os.umask(umask)
+
+        try:
+            tok_file_desc = os.open(tok_filepath, flags, mode)
+        finally:
+            os.umask(umask_original)
+
+        with os.fdopen(tok_file_desc, "w") as tok_file:
+            tok_file.write(tok_file_content)
+
+    @classmethod
+    def read_oauth_tok(cls, tok_filepath=None):
+        """Convenience routine - read previously saved OAuth token for re-use.
+        
+        Care should be taken to ensure that the content is held securely
+        on the target file system
+        """
+        if tok_filepath is None:
+            tok_filepath = cls.DEF_OAUTH_TOK_FILEPATH
+        
+        with open(tok_filepath) as tok_file:
+            tok_file_content = tok_file.read()
+
+        return json.loads(tok_file_content)

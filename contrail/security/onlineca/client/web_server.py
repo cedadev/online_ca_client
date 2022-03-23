@@ -11,23 +11,17 @@ __contact__ = "Philip.Kershaw@stfc.ac.uk"
 import contextlib
 import threading
 import time
-from queue import Queue
-import webbrowser
 
 import uvicorn 
-from uvicorn.protocols.http.h11_impl import H11Protocol
 
 
 class StoppableWebServer(uvicorn.Server):
     """Threaded Uvicorn server which receives content from an external queue
     to signal to shutdown the service
+
+    config passed to constructor needs an additional attribute 
+    h11_shutdown_queue which is a queue.Queue object
     """
-    def __init__(self, config: uvicorn.Config, queue: Queue) -> None:
-        super().__init__(config)
-
-        # Queue used to store flag to indicate server should be shutdown
-        self.queue = queue
-
     @contextlib.contextmanager
     def run_in_thread(self) -> None:
         thread = threading.Thread(target=self.run)
@@ -36,7 +30,7 @@ class StoppableWebServer(uvicorn.Server):
         try:
             # Flow complete Queue object is used to flag that the OAuth
             # process has been completed
-            while self.queue.qsize() < 1:
+            while self.config.h11_shutdown_queue.qsize() < 1:
                 time.sleep(1e-3)
                 self.thread_callback()
             yield
