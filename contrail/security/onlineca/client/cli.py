@@ -23,6 +23,10 @@ from argparse import ArgumentParser
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 from contrail.security.onlineca.client import OnlineCaClient
+from contrail.security.onlineca.client.oauth2_web_client import (
+    THIS_DIR,
+    OAuthAuthorisationCodeFlowClient
+)
 
 log = logging.getLogger(__name__)
 
@@ -205,3 +209,11 @@ class OnlineCaClientCLI(object):
 def main():
     """Certificate Authority CLI - Wrapper for use by script entry point"""
     OnlineCaClientCLI().main()
+
+if __name__ == "__main__":
+    os.environ[OAuthAuthorisationCodeFlowClient.SETTINGS_FILEPATH_ENVVARNAME
+        ] = os.path.join(THIS_DIR, "test", "idp.yaml")
+    clnt = OAuthAuthorisationCodeFlowClient()
+    clnt.get_access_tok()
+    creds = clnt.get_certificate()
+    

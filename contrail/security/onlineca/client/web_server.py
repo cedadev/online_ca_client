@@ -1,5 +1,5 @@
-"""Online CA service client - OAuth 2.0 client for obtaining a delegated 
-certificate
+"""Online CA service client - web server which can be stopped programmatically
+by populating a Queue object with at least one element
 
 Contrail Project
 """
@@ -11,6 +11,7 @@ __contact__ = "Philip.Kershaw@stfc.ac.uk"
 import contextlib
 import threading
 import time
+from queue import Queue
 
 import uvicorn 
 
@@ -20,17 +21,21 @@ class StoppableWebServer(uvicorn.Server):
     to signal to shutdown the service
 
     config passed to constructor needs an additional attribute 
-    h11_shutdown_queue which is a queue.Queue object
+    shutdown_queue which is a queue.Queue object
     """
+    def __init__(self, config: uvicorn.Config) -> None:
+        super().__init__(config)
+        self.config.shutdown_queue = Queue()
+            
     @contextlib.contextmanager
     def run_in_thread(self) -> None:
         thread = threading.Thread(target=self.run)
         thread.start()
-        launched_browser = False
+        
         try:
             # Flow complete Queue object is used to flag that the OAuth
             # process has been completed
-            while self.config.h11_shutdown_queue.qsize() < 1:
+            while self.config.shutdown_queue.qsize() < 1:
                 time.sleep(1e-3)
                 self.thread_callback()
             yield
@@ -39,6 +44,7 @@ class StoppableWebServer(uvicorn.Server):
             thread.join()
 
     def thread_callback(self):
-        """Callback function for loop to allow application of custom behaviours
+        """Callback function for loop - make an alternative method in a subclass 
+        allow application of custom behaviours
         """
         pass
