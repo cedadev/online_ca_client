@@ -24,7 +24,8 @@ from . import OnlineCaClient
 from .web_server import StoppableWebServer
 
 THIS_DIR = os.path.dirname(__file__)
-        
+OAUTH_WEB_APP_PKG_PATH = __name__.rsplit(".", 1)[0]
+
 
 class OAuthFlowH11Protocol(H11Protocol):
     """Derive from H11Protocol class and inject into uvicorn as way of managing
@@ -61,7 +62,7 @@ class OAuthAuthorisationCodeFlowClient:
     retrieving a user certificate
     """
     # Path for Quart web app to pass to uvicorn
-    OAUTH_WEB_APP_MODULE_NAME = "oauth2_web_app"
+    OAUTH_WEB_APP_MODULE_NAME = f"{OAUTH_WEB_APP_PKG_PATH}.oauth2_web_app"
     OAUTH_WEB_APP_NAME = "app"
     WEB_APP_PATH = f"{OAUTH_WEB_APP_MODULE_NAME}:{OAUTH_WEB_APP_NAME}"
     DEF_SETTINGS_FILENAME = ".onlinecaclient_idp.yaml"
@@ -125,14 +126,16 @@ class OAuthAuthorisationCodeFlowClient:
                                     host=start_url.hostname, 
                                     port=start_url.port, 
                                     http=OAuthFlowH11Protocol,
-                                    log_level="critical")
+                                    log_level="error")
             
             server = OAuthFlowStoppableWebServer(config, redirect_url.path)
 
             with server.run_in_thread():
                 # Server started.
                 print(f"Loading page {self.settings['start_url']} in your "
-                      "default browser ...")
+                      "default browser. If this doesn't work, please paste this "
+                      "address in a new browser window and follow the "
+                      "instructions ...")
         finally:
             if oauthlib_insecure_transport is None:
                 del os.environ['OAUTHLIB_INSECURE_TRANSPORT']

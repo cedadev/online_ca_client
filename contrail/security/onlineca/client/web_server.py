@@ -14,6 +14,9 @@ import time
 from queue import Queue
 
 import uvicorn 
+import signal, socket
+from types import FrameType
+from typing import Optional, List
 
 
 class StoppableWebServer(uvicorn.Server):
@@ -26,12 +29,21 @@ class StoppableWebServer(uvicorn.Server):
     def __init__(self, config: uvicorn.Config) -> None:
         super().__init__(config)
         self.config.shutdown_queue = Queue()
-            
+
+    async def serve(self, sockets: Optional[List[socket.socket]] = None) -> None:
+        """Override base implementation in order to catch exceptions and make
+        the program exit"""
+        try:
+            await super().serve(sockets)
+        except (Exception, BaseException) as e:
+            # Use queue to signal to top-level loop to break
+            self.config.shutdown_queue.put(True)
+
     @contextlib.contextmanager
     def run_in_thread(self) -> None:
         thread = threading.Thread(target=self.run)
         thread.start()
-        
+
         try:
             # Flow complete Queue object is used to flag that the OAuth
             # process has been completed
