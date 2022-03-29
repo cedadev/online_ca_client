@@ -91,21 +91,6 @@ class OAuthAuthorisationCodeFlowClient:
         
         return settings
 
-    def get_certificate(self) -> tuple:
-        """Fetching a protected resource using an OAuth 2 token.
-        """
-        token = OnlineCaClient.read_oauth_tok()
-
-        oauth2_session = OAuth2Session(client_id=self.settings['client_id'], 
-                                       token=token)
-
-        online_ca_clnt = OnlineCaClient()
-
-        # Scope setting is also the URI to the resource - the certificate issuing 
-        # endpoint
-        return online_ca_clnt.get_certificate_using_session(oauth2_session, 
-                                                        self.settings['scope'])
-
     def get_access_tok(self) -> None:
         """Obtain access token by starting a client web server ready for the 
         user to authenticate with the OAuth Authorisation Server and grant 

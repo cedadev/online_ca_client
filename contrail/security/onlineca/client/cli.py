@@ -43,6 +43,7 @@ class OnlineCaClientCLI(object):
     DEF_CACERT_DIR = os.path.join(os.path.expanduser("~"), ".onlineca",
                                   "certificates")
     PEM_OUT_TO_STDOUT = '-'
+    TOK_FILEPATH_DEF_FLAG = '-'
 
     def __init__(self):
         self.clnt = OnlineCaClient()
@@ -61,7 +62,12 @@ class OnlineCaClientCLI(object):
                                     "arguments are not needed when using OAuth "
                                     "token option")
 
-            access_tok = OnlineCaClient.read_oauth_tok(cmdline_args.token_filepath)
+            if cmdline_args.token_filepath == self.TOK_FILEPATH_DEF_FLAG:
+                access_tok = OnlineCaClient.read_oauth_tok()
+            else:
+                access_tok = OnlineCaClient.read_oauth_tok(
+                                    tok_filepath=cmdline_args.token_filepath)
+
             self.clnt.get_delegated_certificate(access_tok, 
                                 cmdline_args.server_url,
                                 pem_out_filepath=cmdline_args.pem_out_filepath)
@@ -76,8 +82,16 @@ class OnlineCaClientCLI(object):
                                                        cmdline_args.username,
                                                        cmdline_args.server_url))
 
-        self.clnt.get_certificate(cmdline_args.username, password,
-                                cmdline_args.server_url,
+        # Set the username default here rather than via argparse so that we can
+        # test for user explicitly and erroneously setting username in the above
+        # when the token switch has been set
+        if cmdline_args.username:
+            username = cmdline_args.username
+        else:
+            username = os.environ.get('LOGNAME', '')
+
+                                         
+        self.clnt.get_certificate(username, password, cmdline_args.server_url,
                                 pem_out_filepath=cmdline_args.pem_out_filepath)
 
     def _get_trustroots(self, cmdline_args):
@@ -99,7 +113,6 @@ class OnlineCaClientCLI(object):
         clnt = OAuthAuthorisationCodeFlowClient()
         clnt.get_access_tok()
         
-
     def main(self, *args):
         '''Main method for parsing arguments from the command line or input
         tuple and calling appropriate command
@@ -163,13 +176,13 @@ class OnlineCaClientCLI(object):
                                         help=get_access_tok_descr_and_help,
                                         description=get_access_tok_descr_and_help)
 
-        get_access_tok_arg_parser.add_argument("-t", "--access-token-filepath",
-                          nargs="?",
-                          const=OnlineCaClient.DEF_OAUTH_TOK_FILEPATH,
-                        #   action="store_true",
-                          default=False,
-                          #dest="access_tok_filepath",
-                          help="File location to store output OAuth access token")
+        get_access_tok_arg_parser.add_argument("-t", "--token",
+                          default=OnlineCaClient.DEF_OAUTH_TOK_FILEPATH,
+                          metavar="<token file path>",
+                          dest="access_tok_filepath",
+                          help="Location to store OAuth access token. If omitted "
+                               "the token will be written to the default location "
+                               "{!r}.".format(OnlineCaClient.DEF_OAUTH_TOK_FILEPATH))
 
         get_access_tok_arg_parser.set_defaults(func=self._get_access_tok)
 
@@ -182,6 +195,7 @@ class OnlineCaClientCLI(object):
 
         get_cert_arg_parser.add_argument("-s", "--server-url",
                                          dest="server_url",
+                                         required=True,
                                          metavar="<get certificate URL>",
                                          help="Server URL for Get Certificate "
                                             "request")
@@ -189,7 +203,6 @@ class OnlineCaClientCLI(object):
         get_cert_arg_parser.add_argument(*self.USERNAME_ARGNAMES,
                                          dest="username",
                                          metavar="<username>",
-                                         default=os.environ.get('LOGNAME', ''),
                                          help='Set username.  Defaults to '
                                          '"LOGNAME" environment variable '
                                          'setting.')
@@ -206,12 +219,12 @@ class OnlineCaClientCLI(object):
                           default=OnlineCaClient.DEF_OAUTH_TOK_FILEPATH,
                           metavar="<token file path>",
                           help="Obtain certificate using an OAuth token "
-                               "contained in the specified file. If no file is "
-                               "given, use the default location \""
-                               f"{OnlineCaClient.DEF_OAUTH_TOK_FILEPATH}\". "
-                               "Token can be obtained using the \""
-                               f"{self.GET_ACCESS_TOK_CMD}\" command. -s, -l "
-                               "and -P options are not required when using this "
+                               "contained in the specified file. If file is set "
+                               "to '-', then the default location "
+                               f"'{OnlineCaClient.DEF_OAUTH_TOK_FILEPATH}' will "
+                               "be used. The token file can be obtained using the '"
+                               f"{self.GET_ACCESS_TOK_CMD}' command. '-s', '-l' "
+                               "and '-P' options are not required when using this "
                                "option")
 
         get_cert_arg_parser.add_argument("-o", "--out",
@@ -270,7 +283,4 @@ def main():
     """Certificate Authority CLI - Wrapper for use by script entry point"""
     OnlineCaClientCLI().main()
 
-# FIXME: temporary code for testing OAuth 2.0 delegation flow
-if __name__ == "__main__":
-    pass
     

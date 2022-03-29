@@ -35,7 +35,8 @@ class StoppableWebServer(uvicorn.Server):
         the program exit"""
         try:
             await super().serve(sockets)
-        except (Exception, BaseException) as e:
+            
+        except (Exception, BaseException):
             # Use queue to signal to top-level loop to break
             self.config.shutdown_queue.put(True)
 
