@@ -246,8 +246,7 @@ class OnlineCaClient(object):
         concatenated private key and certificate issued
         :return: tuple of key pair object and certificate
         '''
-        session = requests_oauthlib.OAuth2Session()
-        session.access_token = access_token
+        session = requests_oauthlib.OAuth2Session(token=access_token)
 
         return self.get_certificate_using_session(session, server_url,
                                             pem_out_filepath=pem_out_filepath)

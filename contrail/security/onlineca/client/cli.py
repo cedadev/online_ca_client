@@ -24,7 +24,6 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 from contrail.security.onlineca.client import OnlineCaClient
 from contrail.security.onlineca.client.oauth2_web_client import (
-    THIS_DIR,
     OAuthAuthorisationCodeFlowClient
 )
 
@@ -55,18 +54,18 @@ class OnlineCaClientCLI(object):
         :param cmdline_args: command line arguments from argparse
         ArgumentParser
         '''
-        if cmdline_args.token_filepath:
+        if cmdline_args.tok_filepath:
             if cmdline_args.username or cmdline_args.stdin_password:
                 raise ArgumentError(None, f"Username {self.USERNAME_ARGNAMES} "
                                     f"and password {self.PASSWD_ARGNAMES} "
                                     "arguments are not needed when using OAuth "
                                     "token option")
 
-            if cmdline_args.token_filepath == self.TOK_FILEPATH_DEF_FLAG:
+            if cmdline_args.tok_filepath == self.TOK_FILEPATH_DEF_FLAG:
                 access_tok = OnlineCaClient.read_oauth_tok()
             else:
                 access_tok = OnlineCaClient.read_oauth_tok(
-                                    tok_filepath=cmdline_args.token_filepath)
+                                    tok_filepath=cmdline_args.tok_filepath)
 
             self.clnt.get_delegated_certificate(access_tok, 
                                 cmdline_args.server_url,
@@ -108,10 +107,16 @@ class OnlineCaClientCLI(object):
                                  bootstrap=cmdline_args.bootstrap)
 
     def _get_access_tok(self, cmdline_args):
-        os.environ[OAuthAuthorisationCodeFlowClient.SETTINGS_FILEPATH_ENVVARNAME
-        ] = os.path.join(THIS_DIR, "test", "idp.yaml")
-        clnt = OAuthAuthorisationCodeFlowClient()
+        """Get OAuth 2.0 access token invoking authorisation code flow with
+        a web server and browser
+        """
+        clnt = OAuthAuthorisationCodeFlowClient(
+                            settings_filepath=cmdline_args.settings_filepath,
+                            tok_filepath=cmdline_args.tok_filepath)
         clnt.get_access_tok()
+
+        # completed
+        print(f"Access token written to '{clnt.tok_filepath}'")
         
     def main(self, *args):
         '''Main method for parsing arguments from the command line or input
@@ -165,11 +170,11 @@ class OnlineCaClientCLI(object):
         get_trustroots_arg_parser.set_defaults(func=self._get_trustroots)
 
         # Configuration for getting OAuth access token
-        get_access_tok_descr_and_help = ('Obtain OAuth access token in order '
-                                         'retrieve certificate by this token '
-                                         'instead of username and password. '
-                                         'This command involves launching an '
-                                         'interactive web session with a browser')
+        get_access_tok_descr_and_help = (
+            'Obtain OAuth access token in order retrieve certificate by this '
+            'token instead of username and password. This command involves '
+            'launching an interactive web session with a browser'
+            )
 
         get_access_tok_arg_parser = sub_parsers.add_parser(
                                         self.__class__.GET_ACCESS_TOK_CMD,
@@ -179,9 +184,9 @@ class OnlineCaClientCLI(object):
         get_access_tok_arg_parser.add_argument("-t", "--token",
                           default=OnlineCaClient.DEF_OAUTH_TOK_FILEPATH,
                           metavar="<token file path>",
-                          dest="access_tok_filepath",
-                          help="Location to store OAuth access token. If omitted "
-                               "the token will be written to the default location "
+                          dest="tok_filepath",
+                          help="File location to store OAuth access token. If omitted "
+                               "the token will be written to the default "
                                "{!r}.".format(OnlineCaClient.DEF_OAUTH_TOK_FILEPATH))
 
         get_access_tok_arg_parser.set_defaults(func=self._get_access_tok)
@@ -214,18 +219,26 @@ class OnlineCaClientCLI(object):
                                "service.  If omitted, the program will prompt "
                                "for the setting.")
 
+        get_cert_arg_parser.add_argument("-f", "--settings",
+                dest="settings_filepath",
+                default=OAuthAuthorisationCodeFlowClient.DEF_SETTINGS_FILEPATH,
+                metavar="<settings file path>",
+                help="Specify YAML format file containing required "
+                    "settings for interaction with OAuth 2.0 service"
+                    " needed to obtain an access token")
+
         get_cert_arg_parser.add_argument("-t", "--token",
-                          dest="token_filepath",
-                          default=OnlineCaClient.DEF_OAUTH_TOK_FILEPATH,
-                          metavar="<token file path>",
-                          help="Obtain certificate using an OAuth token "
-                               "contained in the specified file. If file is set "
-                               "to '-', then the default location "
-                               f"'{OnlineCaClient.DEF_OAUTH_TOK_FILEPATH}' will "
-                               "be used. The token file can be obtained using the '"
-                               f"{self.GET_ACCESS_TOK_CMD}' command. '-s', '-l' "
-                               "and '-P' options are not required when using this "
-                               "option")
+                    dest="tok_filepath",
+                    default=OnlineCaClient.DEF_OAUTH_TOK_FILEPATH,
+                    metavar="<token file path>",
+                    help="Obtain certificate using an OAuth token "
+                        "contained in the specified file. If file is set "
+                        "to '-', then the default location "
+                        f"'{OnlineCaClient.DEF_OAUTH_TOK_FILEPATH}' will "
+                        "be used. The token file can be obtained using the '"
+                        f"{self.GET_ACCESS_TOK_CMD}' command. '-s', '-l' "
+                        "and '-P' options are not required when using this "
+                        "option")
 
         get_cert_arg_parser.add_argument("-o", "--out",
                           dest="pem_out_filepath",

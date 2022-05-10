@@ -18,13 +18,9 @@ from urllib.parse import urlparse
 import yaml
 import uvicorn 
 from uvicorn.protocols.http.h11_impl import H11Protocol
-from requests_oauthlib import OAuth2Session
 
-from . import OnlineCaClient
 from .web_server import StoppableWebServer
-
-THIS_DIR = os.path.dirname(__file__)
-OAUTH_WEB_APP_PKG_PATH = __name__.rsplit(".", 1)[0]
+from .oauth2_web_app import OAuth2WebApp
 
 
 class OAuthFlowH11Protocol(H11Protocol):
@@ -61,32 +57,32 @@ class OAuthAuthorisationCodeFlowClient:
     """Manage OAuth Authorisation Code flow to obtain an access token for use
     retrieving a user certificate
     """
-    # Path for Quart web app to pass to uvicorn
-    OAUTH_WEB_APP_MODULE_NAME = f"{OAUTH_WEB_APP_PKG_PATH}.oauth2_web_app"
-    OAUTH_WEB_APP_NAME = "app"
-    WEB_APP_PATH = f"{OAUTH_WEB_APP_MODULE_NAME}:{OAUTH_WEB_APP_NAME}"
     DEF_SETTINGS_FILENAME = ".onlinecaclient_idp.yaml"
     DEF_SETTINGS_FILEPATH = os.path.join(os.environ['HOME'], DEF_SETTINGS_FILENAME)
     SETTINGS_FILEPATH_ENVVARNAME = "ONLINECA_CLNT_SETTINGS_FILEPATH"
 
-    def __init__(self, settings: dict = None):
+    def __init__(self, settings: dict = None, settings_filepath: str = None,
+                tok_filepath: str = None):
         if settings is None:
-            self.settings = self.read_settings_file()
+            self.settings = self.read_settings_file(filepath=settings_filepath)
         else:
             self.settings = settings
 
+        self.tok_filepath = tok_filepath
+
     @classmethod
-    def read_settings_file(cls) -> dict:
+    def read_settings_file(cls, filepath: str = None) -> dict:
         """Read settings for OAuth connections from YAML file. YAML file
         path is set via an environment variable. If this is not set, it's
         taken from a default"""
 
         # Follow an order of precedence for where to get file from
-        settings_filepath = os.environ.get(cls.SETTINGS_FILEPATH_ENVVARNAME)
-        if settings_filepath is None:
-            settings_filepath = cls.DEF_SETTINGS_FILEPATH
+        if filepath is None:
+            filepath = os.environ.get(cls.SETTINGS_FILEPATH_ENVVARNAME)
+            if filepath is None:
+                filepath = cls.DEF_SETTINGS_FILEPATH
 
-        with open(settings_filepath) as settings_file:
+        with open(filepath) as settings_file:
             settings = yaml.safe_load(settings_file)
         
         return settings
@@ -106,8 +102,12 @@ class OAuthAuthorisationCodeFlowClient:
         oauthlib_insecure_transport = os.environ.get(
                                                 "OAUTHLIB_INSECURE_TRANSPORT")
         os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
+
+        web_app = OAuth2WebApp(self.settings, __name__, 
+                            tok_filepath=self.tok_filepath)
+
         try:
-            config = uvicorn.Config(self.WEB_APP_PATH, 
+            config = uvicorn.Config(web_app, 
                                     host=start_url.hostname, 
                                     port=start_url.port, 
                                     http=OAuthFlowH11Protocol,
@@ -128,9 +128,6 @@ class OAuthAuthorisationCodeFlowClient:
                 os.environ[
                     'OAUTHLIB_INSECURE_TRANSPORT'
                     ] = oauthlib_insecure_transport
-
-        # Server stopped.
-        print("completed")
 
 
 
