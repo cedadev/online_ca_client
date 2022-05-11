@@ -154,5 +154,6 @@ output=$(awk -v certchain="${esc_certchain}" -v key="${esc_key}" 'BEGIN {\
     print \
 }')
 
-# Output certificates with private key
-echo "$output" > $outfilepath
+# Output certificates with private key ensuring all backslashes have been
+# converted back to newline characters
+echo "$output"|tr -s '\\' '\n' > $outfilepath
