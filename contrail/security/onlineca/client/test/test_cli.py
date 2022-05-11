@@ -7,7 +7,7 @@ __date__ = "28/05/12"
 __copyright__ = "Copyright 2019 United Kingdom Research and Innovation"
 __license__ = "BSD - see LICENSE file in top-level directory"
 __contact__ = "Philip.Kershaw@stfc.ac.uk"
-__revision__ = '$Id$'
+__revision__ = "$Id$"
 import os
 import sys
 import shutil
@@ -29,14 +29,14 @@ else:
 
 
 class OnlineCaClientCLITestCase(unittest.TestCase):
-    'Test Certificate Authority command line interface'
+    "Test Certificate Authority command line interface"
     ONLINECA_GET_CERT_URL = os.environ.get(
-                                "TEST_ONLINECA_GET_CERT_URL",
-                                "http://localhost:10443/certificate/")
+        "TEST_ONLINECA_GET_CERT_URL", "http://localhost:10443/certificate/"
+    )
 
     ONLINECA_GET_TRUSTROOTS_URL = os.environ.get(
-                               "TEST_ONLINECA_GET_TRUSTROOTS_URL",
-                               "http://localhost:10443/trustroots/")
+        "TEST_ONLINECA_GET_TRUSTROOTS_URL", "http://localhost:10443/trustroots/"
+    )
 
     CACERT_DIR = os.path.join(TEST_DIR, "test-cli-ca")
     USERNAME = os.environ.get("TEST_ONLINECA_GET_CERT_USERNAME", "testuser")
@@ -47,9 +47,11 @@ class OnlineCaClientCLITestCase(unittest.TestCase):
         try:
             OnlineCaClientCLI().main(
                 OnlineCaClientCLI.GET_TRUSTROOTS_CMD,
-                '-s', self.__class__.ONLINECA_GET_TRUSTROOTS_URL,
-                '-b',
-                '--ca-cert-dir', self.__class__.CACERT_DIR
+                "-s",
+                self.__class__.ONLINECA_GET_TRUSTROOTS_URL,
+                "-b",
+                "--ca-cert-dir",
+                self.__class__.CACERT_DIR,
             )
 
         except Exception:
@@ -61,7 +63,7 @@ class OnlineCaClientCLITestCase(unittest.TestCase):
         unittest.TestCase.tearDown(self)
 
     def _check_cert(self, cert_filepath):
-        with open(cert_filepath, 'rb') as cert_file:
+        with open(cert_filepath, "rb") as cert_file:
             s_cert = cert_file.read()
 
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, s_cert)
@@ -82,11 +84,15 @@ class OnlineCaClientCLITestCase(unittest.TestCase):
 
             OnlineCaClientCLI().main(
                 OnlineCaClientCLI.GET_CERT_CMD,
-                '-s', self.__class__.ONLINECA_GET_CERT_URL,
-                '-l', self.__class__.USERNAME,
-                '--stdin-password',
-                '-o', self.__class__.PEM_OUT_FILEPATH,
-                '-c', self.__class__.CACERT_DIR
+                "-s",
+                self.__class__.ONLINECA_GET_CERT_URL,
+                "-l",
+                self.__class__.USERNAME,
+                "--stdin-password",
+                "-o",
+                self.__class__.PEM_OUT_FILEPATH,
+                "-c",
+                self.__class__.CACERT_DIR,
             )
 
             self._check_cert(self.__class__.PEM_OUT_FILEPATH)
@@ -99,5 +105,5 @@ class OnlineCaClientCLITestCase(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
+    # import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

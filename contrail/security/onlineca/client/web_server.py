@@ -12,10 +12,10 @@ import contextlib
 import threading
 import time
 from queue import Queue
+from collections.abc import Generator
 
-import uvicorn 
-import signal, socket
-from types import FrameType
+import uvicorn
+import socket
 from typing import Optional, List
 
 
@@ -23,9 +23,10 @@ class StoppableWebServer(uvicorn.Server):
     """Threaded Uvicorn server which receives content from an external queue
     to signal to shutdown the service
 
-    config passed to constructor needs an additional attribute 
+    config passed to constructor needs an additional attribute
     shutdown_queue which is a queue.Queue object
     """
+
     def __init__(self, config: uvicorn.Config) -> None:
         super().__init__(config)
         self.config.shutdown_queue = Queue()
@@ -35,13 +36,13 @@ class StoppableWebServer(uvicorn.Server):
         the program exit"""
         try:
             await super().serve(sockets)
-            
+
         except (Exception, BaseException):
             # Use queue to signal to top-level loop to break
             self.config.shutdown_queue.put(True)
 
     @contextlib.contextmanager
-    def run_in_thread(self) -> None:
+    def run_in_thread(self) -> Generator[None, None, None]:
         thread = threading.Thread(target=self.run)
         thread.start()
 
@@ -57,7 +58,7 @@ class StoppableWebServer(uvicorn.Server):
             thread.join()
 
     def thread_callback(self):
-        """Callback function for loop - make an alternative method in a subclass 
+        """Callback function for loop - make an alternative method in a subclass
         allow application of custom behaviours
         """
         pass
