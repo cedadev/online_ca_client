@@ -117,24 +117,43 @@ response=$(wget --secure-protocol TLSv1 --ca-directory=$cadir \
 wget_statcode_line="awaiting response..."
 responsecode=$(echo "$response"|grep "$wget_statcode_line"|awk '{print $6}'|tail -1)
 if [ "$responsecode" != "200" ]; then
-    echo "Get certificate call failed."
-    echo "$response" >&2
+    echo "Get certificate call failed: $response" >&2
     exit 1
 fi
 
-# Extract the certificate(s) - there may be additional certificates forming
-# part of a chain of trust back to a root CA.
-cert=$(echo "$response" | sed -n '/BEGIN CERTIFICATE/,/END CERTIFICATE/p')
+# Cut-out extraneous wget output to get certificate chain only
+certchain=$(echo "$response"|sed -n '/BEGIN CERTIFICATE/,/END CERTIFICATE/p')
 
 # Simple sanity check on extracted cert
-if [[ $cert != -----BEGIN\ CERTIFICATE-----* ]]; then
-    echo "Expecting certificate in response; got:"
-    echo "$cert" >&2
+if [[ $certchain != -----BEGIN\ CERTIFICATE-----* ]]; then
+    echo "Expecting certificate in response; got:" >&2
+    echo "$certchain" >&2
     exit 1
 fi
 
-# Output certificate
-echo "$cert" > $outfilepath
+# Separate out End Entity Certificate from any other certificates returned in 
+# the trust chain. This is needed so that there is ordering consistent with
+# the behaviour of MyProxyCA
 
-# Add key
-echo "$key" >> $outfilepath
+# Escape line endings for private key so that it can work with awk
+esc_key=$(echo "${key}" | sed '$!s@$@\\@g')
+
+# Similarly, escape line endings for certificate chain
+esc_certchain=$(echo "$certchain"| sed '$!s@$@\\@g')
+
+# Inject private key content into response immediately after the first 
+# certificate (i.e. the End Entity Certificate) in the certificate chain
+output=$(awk -v certchain="${esc_certchain}" -v key="${esc_key}" 'BEGIN {\
+    len = split(certchain, arr, "-----END CERTIFICATE-----"); \
+    for (i=1; i < len; i++) {\
+        printf "%s-----END CERTIFICATE-----", arr[i]; \
+        if (i == 1) {\
+            printf "\n%s", key \
+        } \
+    }; \
+    print \
+}')
+
+# Output certificates with private key ensuring all backslashes have been
+# converted back to newline characters
+echo "$output"|tr -s '\\' '\n' > $outfilepath

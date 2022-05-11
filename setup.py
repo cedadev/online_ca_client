@@ -8,22 +8,23 @@ __date__ = "21/05/10"
 __copyright__ = "(C) 2014 Science and Technology Facilities Council"
 __license__ = """BSD - See LICENSE file in contrail.security.onlineca.client"""
 __contact__ = "Philip.Kershaw@stfc.ac.uk"
-__revision__ = '$Id: $'
+__revision__ = "$Id: $"
 
 # Bootstrap setuptools if necessary.
 try:
     from setuptools import setup, find_packages
 except ImportError:
     from ez_setup import use_setuptools
+
     use_setuptools()
     from setuptools import setup, find_packages
 
 
 setup(
-    name =            	'ContrailOnlineCAClient',
-    version =         	'0.5.1',
-    description =     	'Certificate Authority web service client',
-    long_description = 	'''\
+    name="ContrailOnlineCAClient",
+    version="0.5.2",
+    description="Certificate Authority web service client",
+    long_description="""\
 Provides the client interface for an online Certificate Authority web-service.
 This package works with the ``ContrailOnlineCAService`` the server-side
 implementation also available from PyPI.
@@ -54,56 +55,68 @@ Installation can be performed using pip.
 Configuration
 =============
 Examples are contained in ``onlineca.client.test``.
-''',
-    author =          	'Philip Kershaw',
-    author_email =    	'Philip.Kershaw@stfc.ac.uk',
-    maintainer =        'Philip Kershaw',
-    maintainer_email =  'Philip.Kershaw@stfc.ac.uk',
-    url =             	'https://github.com/cedadev/online_ca_client',
-    platforms =         ['POSIX', 'Linux', 'Windows'],
-    install_requires =  ['requests_oauthlib', 'six', 'PyOpenSSL'],
-    license =           __license__,
-    test_suite =        'contrail.security.onlineca.client.test',
-    packages =          find_packages(),
-    package_data =      {
-        'contrail.security.onlineca.client.test': [
-            '*.cfg', '*.crt', '*.key', '*.pem', 'ca/*.0'
+""",
+    author="Philip Kershaw",
+    author_email="Philip.Kershaw@stfc.ac.uk",
+    maintainer="Philip Kershaw",
+    maintainer_email="Philip.Kershaw@stfc.ac.uk",
+    url="https://github.com/cedadev/online_ca_client",
+    platforms=["POSIX", "Linux", "Windows"],
+    install_requires=[
+        "requests_oauthlib",
+        "types-requests",
+        "six",
+        "types-six",
+        "PyOpenSSL",
+        "types-pyOpenSSL",
+        "asn1crypto",
+        "quart",
+        "pyyaml",
+        "types-PyYAML",
+        "uvicorn",
+        "urllib3",
+        "types-urllib3",
+        "typing_extensions"
+    ],
+    license=__license__,
+    test_suite="contrail.security.onlineca.client.test",
+    packages=find_packages(),
+    package_data={
+        "contrail.security.onlineca.client.test": [
+            "*.cfg",
+            "*.crt",
+            "*.key",
+            "*.pem",
+            "ca/*.0",
         ],
-        'contrail.security.onlineca.client.sh': [
-            '*.sh'
-        ],
-        'contrail.security.onlineca.client': [
-            'README'
-        ],
-        'contrail.security.onlineca.client': [
-            'LICENSE'
-        ]
+        "contrail.security.onlineca.client.sh": ["*.sh"],
+        "contrail.security.onlineca.client": ["README", "LICENSE"],
     },
-    classifiers = [
-        'Development Status :: 5 - Production/Stable',
-        'Environment :: Console',
-        'Environment :: Web Environment',
-        'Intended Audience :: End Users/Desktop',
-        'Intended Audience :: Developers',
-        'Intended Audience :: System Administrators',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
-        'Natural Language :: English',
-        'Operating System :: Microsoft :: Windows',
-        'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Topic :: Security',
-        'Topic :: Internet',
-        'Topic :: Scientific/Engineering',
-        'Topic :: System :: Distributed Computing',
-        'Topic :: System :: Systems Administration :: Authentication/Directory',
-        'Topic :: Software Development :: Libraries :: Python Modules'
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Console",
+        "Environment :: Web Environment",
+        "Intended Audience :: End Users/Desktop",
+        "Intended Audience :: Developers",
+        "Intended Audience :: System Administrators",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: BSD License",
+        "Natural Language :: English",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Topic :: Security",
+        "Topic :: Internet",
+        "Topic :: Scientific/Engineering",
+        "Topic :: System :: Distributed Computing",
+        "Topic :: System :: Systems Administration :: Authentication/Directory",
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     entry_points={
-        'console_scripts': [
-            'online-ca-client = contrail.security.onlineca.client.cli:main',
-             ],
-        },
-    zip_safe = False
+        "console_scripts": [
+            "online-ca-client = contrail.security.onlineca.client.cli:main",
+        ],
+    },
+    zip_safe=False,
 )
