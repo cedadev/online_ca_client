@@ -12,12 +12,12 @@ import os
 import webbrowser
 from urllib.parse import urlparse
 
-import yaml
 import uvicorn
 from uvicorn.protocols.http.h11_impl import H11Protocol
 
 from .web_server import StoppableWebServer
 from .oauth2_web_app import OAuth2WebApp
+from .oauth2_utils import OAuth2Utils
 
 
 class OAuthFlowH11Protocol(H11Protocol):
@@ -55,10 +55,6 @@ class OAuthAuthorisationCodeFlowClient:
     retrieving a user certificate
     """
 
-    DEF_SETTINGS_FILENAME = ".onlinecaclient_idp.yaml"
-    DEF_SETTINGS_FILEPATH = os.path.join(os.environ["HOME"], DEF_SETTINGS_FILENAME)
-    SETTINGS_FILEPATH_ENVVARNAME = "ONLINECA_CLNT_SETTINGS_FILEPATH"
-
     def __init__(
         self,
         settings: dict = None,
@@ -66,28 +62,11 @@ class OAuthAuthorisationCodeFlowClient:
         tok_filepath: str = None,
     ):
         if settings is None:
-            self.settings = self.read_settings_file(filepath=settings_filepath)
+            self.settings = OAuth2Utils.read_settings_file(filepath=settings_filepath)
         else:
             self.settings = settings
 
         self.tok_filepath = tok_filepath
-
-    @classmethod
-    def read_settings_file(cls, filepath: str = None) -> dict:
-        """Read settings for OAuth connections from YAML file. YAML file
-        path is set via an environment variable. If this is not set, it's
-        taken from a default"""
-
-        # Follow an order of precedence for where to get file from
-        if filepath is None:
-            filepath = os.environ.get(cls.SETTINGS_FILEPATH_ENVVARNAME)
-            if filepath is None:
-                filepath = cls.DEF_SETTINGS_FILEPATH
-
-        with open(filepath) as settings_file:
-            settings = yaml.safe_load(settings_file)
-
-        return settings
 
     def get_access_tok(self) -> None:
         """Obtain access token by starting a client web server ready for the

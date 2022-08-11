@@ -21,11 +21,13 @@ import warnings
 from argparse import ArgumentParser, ArgumentError
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests_oauthlib import OAuth2Session
 
 from contrail.security.onlineca.client import OnlineCaClient
 from contrail.security.onlineca.client.oauth2_web_client import (
     OAuthAuthorisationCodeFlowClient,
 )
+from .oauth2_utils import OAuth2Utils
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +38,7 @@ class OnlineCaClientCLI(object):
     GET_TRUSTROOTS_CMD = "get_trustroots"
     GET_CERT_CMD = "get_cert"
     GET_ACCESS_TOK_CMD = "get_token"
+    REFRESH_TOK_CMD = "refresh_token"
 
     USERNAME_ARGNAMES = ("-l", "--username")
     PASSWD_ARGNAMES = ("-P", "--stdin-password")
@@ -65,9 +68,9 @@ class OnlineCaClientCLI(object):
                 )
 
             if cmdline_args.tok_filepath == self.TOK_FILEPATH_DEF_FLAG:
-                access_tok = OnlineCaClient.read_oauth_tok()
+                access_tok = OAuth2Utils.read_oauth_tok()
             else:
-                access_tok = OnlineCaClient.read_oauth_tok(
+                access_tok = OAuth2Utils.read_oauth_tok(
                     tok_filepath=cmdline_args.tok_filepath
                 )
 
@@ -128,6 +131,25 @@ class OnlineCaClientCLI(object):
 
         # completed
         print(f"Access token written to '{clnt.tok_filepath}'")
+
+    def _refresh_tok(self, cmdline_args):
+        """Refresh an expired OAuth 2.0 access token"""
+        
+        settings = OAuth2Utils.read_settings_file(cmdline_args.settings_filepath)
+
+        token = OAuth2Utils.read_oauth_tok(cmdline_args.tok_filepath)
+
+        oauth2_session = OAuth2Session(token=token, scope=settings["scope"])
+
+        new_token = oauth2_session.refresh_token(
+            token_url=settings['token_url'], 
+            auth=(settings["client_id"], settings["client_secret"])
+        )
+
+        OAuth2Utils.save_oauth_tok(new_token, cmdline_args.tok_filepath)
+
+        # completed
+        print(f"New access token written to '{cmdline_args.tok_filepath}'")
 
     def main(self, *args):
         """Main method for parsing arguments from the command line or input
@@ -210,19 +232,19 @@ class OnlineCaClientCLI(object):
         get_access_tok_arg_parser.add_argument(
             "-t",
             "--token",
-            default=OnlineCaClient.DEF_OAUTH_TOK_FILEPATH,
+            default=OAuth2Utils.DEF_OAUTH_TOK_FILEPATH,
             metavar="<token file path>",
             dest="tok_filepath",
             help="File location to store OAuth access token. If omitted "
             "the token will be written to the default "
-            "{!r}.".format(OnlineCaClient.DEF_OAUTH_TOK_FILEPATH),
+            "{!r}.".format(OAuth2Utils.DEF_OAUTH_TOK_FILEPATH),
         )
 
         get_access_tok_arg_parser.add_argument(
             "-f",
             "--settings",
             dest="settings_filepath",
-            default=OAuthAuthorisationCodeFlowClient.DEF_SETTINGS_FILEPATH,
+            default=OAuth2Utils.DEF_SETTINGS_FILEPATH,
             metavar="<settings file path>",
             help="Specify YAML format file containing required "
             "settings for interaction with OAuth 2.0 service"
@@ -230,6 +252,42 @@ class OnlineCaClientCLI(object):
         )
 
         get_access_tok_arg_parser.set_defaults(func=self._get_access_tok)
+
+        # Refresh Access token
+        refresh_tok_descr_and_help = (
+            "Retrieve a fresh OAuth access token to replace an existing expired "
+            "one"
+        )
+
+        refresh_tok_arg_parser = sub_parsers.add_parser(
+            self.__class__.REFRESH_TOK_CMD,
+            help=refresh_tok_descr_and_help,
+            description=refresh_tok_descr_and_help,
+        )
+
+        refresh_tok_arg_parser.add_argument(
+            "-t",
+            "--token",
+            default=OAuth2Utils.DEF_OAUTH_TOK_FILEPATH,
+            metavar="<existing token file path>",
+            dest="tok_filepath",
+            help="File location containing OAuth refresh token. If omitted "
+            "the token will be read from the default location"
+            "{!r}.".format(OAuth2Utils.DEF_OAUTH_TOK_FILEPATH),
+        )
+
+        refresh_tok_arg_parser.add_argument(
+            "-f",
+            "--settings",
+            dest="settings_filepath",
+            default=OAuth2Utils.DEF_SETTINGS_FILEPATH,
+            metavar="<settings file path>",
+            help="Specify YAML format file containing required "
+            "settings for interaction with OAuth 2.0 service"
+            " needed to obtain a new access token",
+        )
+
+        refresh_tok_arg_parser.set_defaults(func=self._refresh_tok)
 
         # Get certificate command configuration
         get_cert_descr_and_help = "Obtain a new certificate from an Online CA"
@@ -270,12 +328,12 @@ class OnlineCaClientCLI(object):
             "-t",
             "--token",
             dest="tok_filepath",
-            default=OnlineCaClient.DEF_OAUTH_TOK_FILEPATH,
+            default=OAuth2Utils.DEF_OAUTH_TOK_FILEPATH,
             metavar="<token file path>",
             help="Obtain certificate using an OAuth token "
             "contained in the specified file. If file is set "
             "to '-', then the default location "
-            f"'{OnlineCaClient.DEF_OAUTH_TOK_FILEPATH}' will "
+            f"'{OAuth2Utils.DEF_OAUTH_TOK_FILEPATH}' will "
             "be used. The token file can be obtained using the '"
             f"{self.GET_ACCESS_TOK_CMD}' command. '-s', '-l' "
             "and '-P' options are not required when using this "
@@ -299,7 +357,7 @@ class OnlineCaClientCLI(object):
             dest="ca_cert_dir",
             metavar="<CA certificate directory>",
             default=self.__class__.DEF_CACERT_DIR,
-            help="Directory containing CA certificate trustroots " "for trusting",
+            help="Directory containing CA certificate trustroots for trusting",
         )
 
         get_cert_arg_parser.set_defaults(func=self._get_cert)

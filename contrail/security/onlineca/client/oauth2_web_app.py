@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 from quart import Quart, request, redirect, session
 from requests_oauthlib import OAuth2Session
 
-from contrail.security.onlineca.client import OnlineCaClient
+from contrail.security.onlineca.client.oauth2_utils import OAuth2Utils
 
 
 class OAuth2WebApp(Quart):
@@ -68,7 +68,7 @@ class OAuth2WebApp(Quart):
             )
 
             # Save token in a file
-            OnlineCaClient.save_oauth_tok(token, tok_filepath=tok_filepath)
+            OAuth2Utils.save_oauth_tok(token, tok_filepath=tok_filepath)
 
             return self.OAUTH_WEB_APP_CALLBACK_COMPL_MSG
 
