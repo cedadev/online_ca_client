@@ -79,3 +79,5 @@ Get certificate - key and certificate(s) may be optionally written to a file
 ```
 >>> key_pair, certs = onlineca_client.get_certificate(username, password, 'https://slcs.somewhere.ac.uk/onlineca/certificate/', pem_out_filepath="./credentials.pem")
 ```
+#### Delegated certificate retrieval using OAuth 2.0 ####
+The identity provider may also support an OAuth 2.0 interface. This enables delegated clients to obtain certificates on behalf of a user. This is useful for scenarios where credentials are needed for an unattended applications requiring user authentication with certificates such as scripts or long running jobs for example large file transfers using GridFTP.
