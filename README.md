@@ -90,18 +90,23 @@ redirect_url: "http://localhost:5000/callback"
 ```
 All other host name details between `<>` need to be filled out. Save this file in the location, `~/.onlinecaclient_idp.yaml` or explicitly set a path in the command line options (see later step).
 
- 3. Obtain OAuth access token. This preliminary step is required in order to obtain a delegated authentication certificate
+ 3. Obtain OAuth access token. This preliminary step is required in order to obtain a delegated authentication certificate:
 ```
 # online-ca-client get_token -f <identity provider configuration file location>
 ```
-If successful, the access token obtained is written out to the file `~/.onlinecaclient_token.json`
+Note that the `-f` option can be omitted in which case, the default identity provider file location will be used (`~/.onlinecaclient_idp.yaml`). If successful, the access token obtained is written out to the file `~/.onlinecaclient_token.json`
 
  4. Obtain certificate using OAuth access token. This call is a similar form to the method with username and password listed above except username and password settings are replaced with the `-t` token switch:
 ```
-online-ca-client get_cert -s https://slcs.jasmin.ac.uk/certificate/ -t - -c ./ca-trustroots/ -o credentials.pem 
+# online-ca-client get_cert -s https://slcs.jasmin.ac.uk/certificate/ -t - -c ./ca-trustroots/ -o credentials.pem 
 ```
 The setting, `-` for the token option (`-t`) indicates to use the default location for the access token as obtained in the previous step i.e. `~/.onlinecaclient_token.json`
- 6. 
+
+ 6. Obtain an updated access token using a Refresh token. In some cases, it may be necessary to renew an access token as it is due to expire. A fresh access token can be obtained using the steps above or alternatively, a new token can be issued if the OAuth Service supports _Refresh tokens_. In this case, when the initial `get_token` call is made a refresh token should have been included in the response from the OAuth Service and written out to the token file (default location - `~/.onlinecaclient_token.json`). This can be checked by listing this file and looking for the key name `"refresh_token"`. If this is present then the refresh token call can be made:
+```
+# online-ca-client refresh_token -f <identity provider configuration file location>
+```
+As with the `get_token` command, the `-f` option can be omitted in order to use the default location. If successful, a new token file will be written out containing a new access token.
 
 ### Python API ###
 Initialise setting directory to store CA certificate trust roots:
