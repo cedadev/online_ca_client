@@ -81,3 +81,28 @@ Get certificate - key and certificate(s) may be optionally written to a file
 ```
 #### Delegated certificate retrieval using OAuth 2.0 ####
 The identity provider may also support an OAuth 2.0 interface. This enables delegated clients to obtain certificates on behalf of a user. This is useful for scenarios where credentials are needed for an unattended applications requiring user authentication with certificates such as scripts or long running jobs for example large file transfers using GridFTP.
+ 1. Configure OAuth client credentials. The client application seeking to obtain delegated credentials on behalf of the user needs to register a client ID and secret with the identity provider. This will need to be done out of band of the client as it is dependent on the identity provider concerned and their policies. 
+ 2. Set identity provider configuration file. Once obtained the details need to be entered into this configuration file:
+```
+# Client credentials
+client_id: "<client id>"
+client_secret: "<client secret>"
+
+# Configuration details for interacting with the Authorisation Server
+authorization_base_url: 'https://<identity provider OAuth service host name>/oauth/authorize'
+token_url: 'https://<identity provider OAuth service host name>/oauth/token/'
+scope: "https://<SLCS Service host name>/certificate/"
+
+# Start location for user to invoke
+start_url: "http://localhost:5000/"
+
+# Location on the client that the Authorisation Server is configured to redirect to
+redirect_url: "http://localhost:5000/callback"
+```
+All other host name details between `<>` need to be filled out. Save this file in the location, `~/.onlinecaclient_idp.yaml` or explicitly set a path in the command line options (see later step).
+ 3. Obtain OAuth access token. This preliminary step is required in order to obtain a delegated authentication certificate
+```
+# online-ca-client get_token -f <identity provider configuration file location>
+```
+If successful, the access token obtained is written out to the file `~/.onlinecaclient_token.json`
+ 4. Obtain certificate using
