@@ -102,7 +102,7 @@ Note that the `-f` option can be omitted in which case, the default identity pro
 ```
 The setting, `-` for the token option (`-t`) indicates to use the default location for the access token as obtained in the previous step i.e. `~/.onlinecaclient_token.json`
 
- 6. Obtain an updated access token using a Refresh token. In some cases, it may be necessary to renew an access token as it is due to expire. A fresh access token can be obtained using the steps above or alternatively, a new token can be issued if the OAuth Service supports _Refresh tokens_. In this case, when the initial `get_token` call is made a refresh token should have been included in the response from the OAuth Service and written out to the token file (default location - `~/.onlinecaclient_token.json`). This can be checked by listing this file and looking for the key name `"refresh_token"`. If this is present then the refresh token call can be made:
+ 5. Obtain an updated access token using a Refresh token. In some cases, it may be necessary to renew an access token as it is due to expire. A fresh access token can be obtained using the steps above or alternatively, a new token can be issued if the OAuth Service supports _Refresh tokens_. In this case, when the initial `get_token` call is made a refresh token should have been included in the response from the OAuth Service and written out to the token file (default location - `~/.onlinecaclient_token.json`). This can be checked by listing this file and looking for the key name `"refresh_token"`. If this is present then the refresh token call can be made:
 ```
 # online-ca-client refresh_token -f <identity provider configuration file location>
 ```
