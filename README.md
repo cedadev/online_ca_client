@@ -65,7 +65,11 @@ $ online-ca-client get_cert -s https://slcs.somewhere.ac.uk/onlineca/certificate
 ```
 
 #### Delegated certificate retrieval using OAuth 2.0 ####
-The identity provider may also support an OAuth 2.0 interface. This enables delegated clients to obtain certificates on behalf of a user. This is useful for scenarios where credentials are needed for an unattended applications requiring user authentication with certificates such as scripts or long running jobs for example large file transfers using GridFTP.
+This method can be used for scenarios where credentials are needed for an unattended applications requiring user authentication with certificates such as scripts or long running jobs for example large file transfers using GridFTP.
+
+To obtain a delegated certificate, the identity provider must support an OAuth 2.0 interface. This enables delegated clients to obtain certificates on behalf of a user. In summary the process is: i) client registers with OAuth service obtaining an id and secret. ii) client calls Oauth service to obtain an access token. iii) client calls OnlineCA SLCS service to obtain a new certificate authenticating using the access token instead of username and password as in the more conventional case.
+
+In more detail:
  1. Configure OAuth client credentials. The client application seeking to obtain delegated credentials on behalf of the user needs to register a client ID and secret with the identity provider. This will need to be done out of band of the client as it is dependent on the identity provider concerned and their policies. 
  2. Set identity provider configuration file. Once obtained the details need to be entered into this configuration file:
 ```
@@ -85,11 +89,13 @@ start_url: "http://localhost:5000/"
 redirect_url: "http://localhost:5000/callback"
 ```
 All other host name details between `<>` need to be filled out. Save this file in the location, `~/.onlinecaclient_idp.yaml` or explicitly set a path in the command line options (see later step).
+
  3. Obtain OAuth access token. This preliminary step is required in order to obtain a delegated authentication certificate
 ```
 # online-ca-client get_token -f <identity provider configuration file location>
 ```
 If successful, the access token obtained is written out to the file `~/.onlinecaclient_token.json`
+
  4. Obtain certificate using OAuth access token. This call is a similar form to the method with username and password listed above except username and password settings are replaced with the `-t` token switch:
 ```
 online-ca-client get_cert -s https://slcs.jasmin.ac.uk/certificate/ -t - -c ./ca-trustroots/ -o credentials.pem 
