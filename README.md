@@ -64,21 +64,6 @@ Obtain a certificate:
 $ online-ca-client get_cert -s https://slcs.somewhere.ac.uk/onlineca/certificate/ -l <username> -c ./ca-trustroots/ -o ./credentials.pem
 ```
 
-### Python API ###
-Initialise setting directory to store CA certificate trust roots:
-```
->>> from contrail.security.onlineca.client import OnlineCaClient
->>> onlineca_client = OnlineCaClient()
->>> onlineca_client.ca_cert_dir = "./ca-trustroots"
-```
-Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directory:
-```
->>> trustroots = onlineca_client.get_trustroots("https://slcs.somewhere.ac.uk/onlineca/trustroots/", bootstrap=True, write_to_ca_cert_dir=True)
-```
-Get certificate - key and certificate(s) may be optionally written to a file
-```
->>> key_pair, certs = onlineca_client.get_certificate(username, password, 'https://slcs.somewhere.ac.uk/onlineca/certificate/', pem_out_filepath="./credentials.pem")
-```
 #### Delegated certificate retrieval using OAuth 2.0 ####
 The identity provider may also support an OAuth 2.0 interface. This enables delegated clients to obtain certificates on behalf of a user. This is useful for scenarios where credentials are needed for an unattended applications requiring user authentication with certificates such as scripts or long running jobs for example large file transfers using GridFTP.
  1. Configure OAuth client credentials. The client application seeking to obtain delegated credentials on behalf of the user needs to register a client ID and secret with the identity provider. This will need to be done out of band of the client as it is dependent on the identity provider concerned and their policies. 
@@ -105,4 +90,25 @@ All other host name details between `<>` need to be filled out. Save this file i
 # online-ca-client get_token -f <identity provider configuration file location>
 ```
 If successful, the access token obtained is written out to the file `~/.onlinecaclient_token.json`
- 4. Obtain certificate using
+ 4. Obtain certificate using OAuth access token. This call is a similar form to the method with username and password listed above except username and password settings are replaced with the `-t` token switch:
+```
+online-ca-client get_cert -s https://slcs.jasmin.ac.uk/certificate/ -t - -c ./ca-trustroots/ -o credentials.pem 
+```
+The setting, `-` for the token option (`-t`) indicates to use the default location for the access token as obtained in the previous step i.e. `~/.onlinecaclient_token.json`
+ 6. 
+
+### Python API ###
+Initialise setting directory to store CA certificate trust roots:
+```
+>>> from contrail.security.onlineca.client import OnlineCaClient
+>>> onlineca_client = OnlineCaClient()
+>>> onlineca_client.ca_cert_dir = "./ca-trustroots"
+```
+Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directory:
+```
+>>> trustroots = onlineca_client.get_trustroots("https://slcs.somewhere.ac.uk/onlineca/trustroots/", bootstrap=True, write_to_ca_cert_dir=True)
+```
+Get certificate - key and certificate(s) may be optionally written to a file
+```
+>>> key_pair, certs = onlineca_client.get_certificate(username, password, 'https://slcs.somewhere.ac.uk/onlineca/certificate/', pem_out_filepath="./credentials.pem")
+```
