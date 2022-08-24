@@ -37,7 +37,7 @@ Examples are contained in ``onlineca.client.test``.
 
 Example Clients
 ---------------
-The is a shell script client as well as Python command line client and API.
+The is a shell script client as well as Python command line client and API. It is *strongly* recommended to use the Python command line or API rather than the shell script client because the latter may be deprecated in the future.
 
 ### Shell script client ###
 Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directory:
@@ -59,7 +59,7 @@ Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directo
 ```
 $ online-ca-client get_trustroots -s https://<hostname>/onlineca/trustroots -b -c ./ca-trustroots
 ```
-Obtain a certificate:
+#### Obtain a certificate using username and password ####
 ```
 $ online-ca-client get_cert -s https://slcs.somewhere.ac.uk/onlineca/certificate/ -l <username> -c ./ca-trustroots/ -o ./credentials.pem
 ```
@@ -90,7 +90,7 @@ redirect_url: "http://localhost:5000/callback"
 ```
 All other host name details between `<>` need to be filled out. Save this file in the location, `~/.onlinecaclient_idp.yaml` or explicitly set a path in the command line options (see later step).
 
- 3. Obtain OAuth access token. This preliminary step is required in order to obtain a delegated authentication certificate:
+ 3. Obtain OAuth access token. This preliminary step is required in order to obtain a delegated authentication certificate. *Note that this command will launch a web browser link and display a page for the identity provider. Follow the steps to sign in with the identity provider and to authorise the client application to obtain delegated credentials. The specific steps may vary depending on the implementation of the identity provider.*
 ```
 # online-ca-client get_token -f <identity provider configuration file location>
 ```
