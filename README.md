@@ -37,7 +37,7 @@ Examples are contained in ``onlineca.client.test``.
 
 Example Clients
 ---------------
-The is a shell script client as well as Python command line client and API.
+The is a shell script client as well as Python command line client and API. It is *strongly* recommended to use the Python command line or API rather than the shell script client because the latter may be deprecated in the future.
 
 ### Shell script client ###
 Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directory:
@@ -59,10 +59,54 @@ Bootstrap trust saving CA trust root certificates in ``./ca-trustroots`` directo
 ```
 $ online-ca-client get_trustroots -s https://<hostname>/onlineca/trustroots -b -c ./ca-trustroots
 ```
-Obtain a certificate:
+#### Obtain a certificate using username and password ####
 ```
 $ online-ca-client get_cert -s https://slcs.somewhere.ac.uk/onlineca/certificate/ -l <username> -c ./ca-trustroots/ -o ./credentials.pem
 ```
+
+#### Delegated certificate retrieval using OAuth 2.0 ####
+This method can be used for scenarios where credentials are needed for an unattended applications requiring user authentication with certificates such as scripts or long running jobs for example large file transfers using GridFTP.
+
+To obtain a delegated certificate, the identity provider must support an OAuth 2.0 interface. This enables delegated clients to obtain certificates on behalf of a user. In summary the process is: i) client registers with OAuth service obtaining an id and secret. ii) client calls Oauth service to obtain an access token. iii) client calls OnlineCA SLCS service to obtain a new certificate authenticating using the access token instead of username and password as in the more conventional case.
+
+In more detail:
+ 1. Configure OAuth client credentials. The client application seeking to obtain delegated credentials on behalf of the user needs to register a client ID and secret with the identity provider. This will need to be done out of band of the client as it is dependent on the identity provider concerned and their policies. 
+ 2. Set identity provider configuration file. Once obtained the details need to be entered into this configuration file:
+```
+# Client credentials
+client_id: "<client id>"
+client_secret: "<client secret>"
+
+# Configuration details for interacting with the Authorisation Server
+authorization_base_url: 'https://<identity provider OAuth service host name>/oauth/authorize'
+token_url: 'https://<identity provider OAuth service host name>/oauth/token/'
+scope: "https://<SLCS Service host name>/certificate/"
+
+# Start location for user to invoke
+start_url: "http://localhost:5000/"
+
+# Location on the client that the Authorisation Server is configured to redirect to
+redirect_url: "http://localhost:5000/callback"
+```
+All other host name details between `<>` need to be filled out. Save this file in the location, `~/.onlinecaclient_idp.yaml` or explicitly set a path in the command line options (see later step).
+
+ 3. Obtain OAuth access token. This preliminary step is required in order to obtain a delegated authentication certificate. *Note that this command will launch a web browser link and display a page for the identity provider. Follow the steps to sign in with the identity provider and to authorise the client application to obtain delegated credentials. The specific steps may vary depending on the implementation of the identity provider.*
+```
+# online-ca-client get_token -f <identity provider configuration file location>
+```
+Note that the `-f` option can be omitted in which case, the default identity provider file location will be used (`~/.onlinecaclient_idp.yaml`). If successful, the access token obtained is written out to the file `~/.onlinecaclient_token.json`
+
+ 4. Obtain certificate using OAuth access token. This call is a similar form to the method with username and password listed above except username and password settings are replaced with the `-t` token switch:
+```
+# online-ca-client get_cert -s https://slcs.jasmin.ac.uk/certificate/ -t - -c ./ca-trustroots/ -o credentials.pem 
+```
+The setting, `-` for the token option (`-t`) indicates to use the default location for the access token as obtained in the previous step i.e. `~/.onlinecaclient_token.json`
+
+ 5. Obtain an updated access token using a Refresh token. In some cases, it may be necessary to renew an access token as it is due to expire. A fresh access token can be obtained using the steps above or alternatively, a new token can be issued if the OAuth Service supports _Refresh tokens_. In this case, when the initial `get_token` call is made a refresh token should have been included in the response from the OAuth Service and written out to the token file (default location - `~/.onlinecaclient_token.json`). This can be checked by listing this file and looking for the key name `"refresh_token"`. If this is present then the refresh token call can be made:
+```
+# online-ca-client refresh_token -f <identity provider configuration file location>
+```
+As with the `get_token` command, the `-f` option can be omitted in order to use the default location. If successful, a new token file will be written out containing a new access token.
 
 ### Python API ###
 Initialise setting directory to store CA certificate trust roots:
