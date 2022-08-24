@@ -70,7 +70,10 @@ This method can be used for scenarios where credentials are needed for an unatte
 To obtain a delegated certificate, the identity provider must support an OAuth 2.0 interface. This enables delegated clients to obtain certificates on behalf of a user. In summary the process is: i) client registers with OAuth service obtaining an id and secret. ii) client calls Oauth service to obtain an access token. iii) client calls OnlineCA SLCS service to obtain a new certificate authenticating using the access token instead of username and password as in the more conventional case.
 
 In more detail:
- 1. Configure OAuth client credentials. The client application seeking to obtain delegated credentials on behalf of the user needs to register a client ID and secret with the identity provider. This will need to be done out of band of the client as it is dependent on the identity provider concerned and their policies. 
+ 1. Configure OAuth client credentials. The client application seeking to obtain delegated credentials on behalf of the user needs to register a client ID and secret with the identity provider. You will also need to provide a redirect URL for the web client that will be run. It is recommended to use the setting, `http://localhost:5000/callback` for this path. You may change the port number to an alternative to `5000` if required.
+
+This registration step needs to be done out of band of the client as it is dependent on the identity provider concerned and their policies. 
+
  2. Set identity provider configuration file. Once obtained the details need to be entered into this configuration file:
 ```
 # Client credentials
@@ -88,7 +91,9 @@ start_url: "http://localhost:5000/"
 # Location on the client that the Authorisation Server is configured to redirect to
 redirect_url: "http://localhost:5000/callback"
 ```
-All other host name details between `<>` need to be filled out. Save this file in the location, `~/.onlinecaclient_idp.yaml` or explicitly set a path in the command line options (see later step).
+All other host name details between `<>` need to be filled out. `start_url` and `redirect_url` are links for an *OAuth Client web service that will run on the `localhost`*. It is possible to edit the port number to a different one if required. The `redirect_url` will need to be given to the identity provider as part of the client registration. The port number set should be consistent for both settings.
+
+Save this file in the location, `~/.onlinecaclient_idp.yaml` or explicitly set a path in the command line options (see later step).
 
  3. Obtain OAuth access token. This preliminary step is required in order to obtain a delegated authentication certificate. *Note that this command will launch a web browser link and display a page for the identity provider. Follow the steps to sign in with the identity provider and to authorise the client application to obtain delegated credentials. The specific steps may vary depending on the implementation of the identity provider.*
 ```
