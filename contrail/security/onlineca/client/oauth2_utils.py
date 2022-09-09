@@ -12,6 +12,7 @@ import os
 import stat
 import yaml
 import json
+from datetime import date, datetime
 
 
 class OAuth2Utils:
@@ -26,6 +27,8 @@ class OAuth2Utils:
     DEF_OAUTH_TOK_FILENAME = ".onlinecaclient_token.json"
     DEF_OAUTH_TOK_FILEPATH = os.path.join(os.environ["HOME"], DEF_OAUTH_TOK_FILENAME)
 
+    EXPIRES_AT_TOK_FIELD_NAME = "expires_at"
+    
     @classmethod
     def read_settings_file(cls, filepath: str = None) -> dict:
         """Read settings for OAuth connections from YAML file. YAML file
@@ -91,3 +94,26 @@ class OAuth2Utils:
             tok_file_content = tok_file.read()
 
         return json.loads(tok_file_content)
+
+    @classmethod
+    def oauth_tok_expired(cls, tok=None):
+        """Check token for expiry - return True if expired
+        
+        Accepts a dict containing the token or else a string for the file path
+        to a token file or None type to use the default file location
+        cls.DEF_OAUTH_TOK_FILEPATH
+        """
+        if isinstance(tok, dict):
+            tok_ = tok
+        else:
+            tok_ = cls.read_oauth_tok(tok_filepath=tok)
+
+        expiry_epoch_time =  tok_.get(cls.EXPIRES_AT_TOK_FIELD_NAME)
+        if expiry_epoch_time is None:
+            raise Exception()
+
+        dt_expiry_epoch_time = datetime.fromtimestamp(expiry_epoch_time)
+
+        return dt_expiry_epoch_time < datetime.utcnow()
+
+

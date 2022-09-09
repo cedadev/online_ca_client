@@ -54,6 +54,7 @@ class OAuthAuthorisationCodeFlowClient:
     """Manage OAuth Authorisation Code flow to obtain an access token for use
     retrieving a user certificate
     """
+    OAUTHLIB_INSECURE_TRANSPORT_ENVVAR_NAME = "OAUTHLIB_INSECURE_TRANSPORT"
 
     def __init__(
         self,
@@ -79,11 +80,12 @@ class OAuthAuthorisationCodeFlowClient:
         redirect_url = urlparse(self.settings["redirect_url"])
         start_url = urlparse(self.settings["start_url"])
 
-        # This allows us to use a plain HTTP callback
-        oauthlib_insecure_transport = os.environ.get("OAUTHLIB_INSECURE_TRANSPORT")
-        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-
         web_app = OAuth2WebApp(self.settings, __name__, tok_filepath=self.tok_filepath)
+
+        # This allows us to use a plain HTTP callback
+        oauthlib_insecure_transport = os.environ.get(
+            self.OAUTHLIB_INSECURE_TRANSPORT_ENVVAR_NAME)
+        os.environ[self.OAUTHLIB_INSECURE_TRANSPORT_ENVVAR_NAME] = "1"
 
         try:
             config = uvicorn.Config(
@@ -106,6 +108,8 @@ class OAuthAuthorisationCodeFlowClient:
                 )
         finally:
             if oauthlib_insecure_transport is None:
-                del os.environ["OAUTHLIB_INSECURE_TRANSPORT"]
+                del os.environ[self.OAUTHLIB_INSECURE_TRANSPORT_ENVVAR_NAME]
             else:
-                os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = oauthlib_insecure_transport
+                os.environ[
+                    self.OAUTHLIB_INSECURE_TRANSPORT_ENVVAR_NAME
+                ] = oauthlib_insecure_transport

@@ -39,6 +39,7 @@ class OnlineCaClientCLI(object):
     GET_CERT_CMD = "get_cert"
     GET_ACCESS_TOK_CMD = "get_token"
     REFRESH_TOK_CMD = "refresh_token"
+    CHECK_TOK_CMD = "check_token"
 
     USERNAME_ARGNAMES = ("-l", "--username")
     PASSWD_ARGNAMES = ("-P", "--stdin-password")
@@ -150,6 +151,15 @@ class OnlineCaClientCLI(object):
 
         # completed
         print(f"New access token written to '{cmdline_args.tok_filepath}'")
+
+    def _check_tok(self, cmdline_args):
+        """Check an access token to see if it is still within its expiry
+        time"""
+        is_expired = OAuth2Utils.oauth_tok_expired(cmdline_args.tok_filepath)
+        if is_expired:
+            print(f"Access token '{cmdline_args.tok_filepath}' has expired")
+        else:
+            print(f"Access token '{cmdline_args.tok_filepath}' is valid")
 
     def main(self, *args):
         """Main method for parsing arguments from the command line or input
@@ -276,19 +286,30 @@ class OnlineCaClientCLI(object):
             "{!r}.".format(OAuth2Utils.DEF_OAUTH_TOK_FILEPATH),
         )
 
-        refresh_tok_arg_parser.add_argument(
-            "-f",
-            "--settings",
-            dest="settings_filepath",
-            default=OAuth2Utils.DEF_SETTINGS_FILEPATH,
-            metavar="<settings file path>",
-            help="Specify YAML format file containing required "
-            "settings for interaction with OAuth 2.0 service"
-            " needed to obtain a new access token",
+         # Check Access token for expiry
+        check_tok_descr_and_help = (
+            "Check OAuth access token for expiry"
         )
 
-        refresh_tok_arg_parser.set_defaults(func=self._refresh_tok)
+        check_tok_arg_parser = sub_parsers.add_parser(
+            self.__class__.CHECK_TOK_CMD,
+            help=check_tok_descr_and_help,
+            description=check_tok_descr_and_help,
+        )
 
+        check_tok_arg_parser.add_argument(
+            "-t",
+            "--token",
+            default=OAuth2Utils.DEF_OAUTH_TOK_FILEPATH,
+            metavar="<token file path>",
+            dest="tok_filepath",
+            help="File location containing OAuth token to be checked. If omitted "
+            "the token will be read from the default location"
+            "{!r}.".format(OAuth2Utils.DEF_OAUTH_TOK_FILEPATH),
+        )
+
+        check_tok_arg_parser.set_defaults(func=self._check_tok)
+        
         # Get certificate command configuration
         get_cert_descr_and_help = "Obtain a new certificate from an Online CA"
         get_cert_arg_parser = sub_parsers.add_parser(
